@@ -12,3 +12,15 @@
 1. 코드는 VS Code에서 작성합니다.
 2. 팀원은 Vivado에서 `.v` 파일을 import하여 실행합니다.
 3. 결과물은 `doc/`에 저장해 공유합니다.
+
+# 4-bit Adder (임시 Verilog Project)
+
+## 📁 Files
+- `adder_4bit.v`: 4-bit ripple carry adder module
+- `adder_4bit_tb.v`: Testbench to verify adder logic
+
+## 🚀 How to Simulate
+```bash
+iverilog -o adder_tb adder_4bit.v adder_4bit_tb.v
+vvp adder_tb
+gtkwave adder_4bit_tb.vcd
