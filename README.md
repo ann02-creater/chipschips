@@ -7,7 +7,7 @@
 - `src/`: 주요 Verilog 소스코드
 - `sim/`: 테스트벤치와 시뮬레이션 관련 파일
 - `doc/`: 결과 파형 스크린샷 또는 pdf 보고서
-- `veril/`: verilog 문법 공부자료
+- `vrl/`: verilog 문법 공부자료
 
 ## 사용 방법
 1. 코드는 VS Code에서 작성합니다.
