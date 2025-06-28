@@ -8,9 +8,8 @@ NEXYS A7 FPGA 보드를 활용한 **Verilog 디지털 회로 설계 프로젝트
 chipschips/
 ├── src/                    # 🔧 프로젝트별 Verilog 소스코드
 │   └── stopwatch/          # 📁 프로젝트 1: 모듈식 스톱워치
-├── sources_1/new/          # 📚 참고용 기존 소스코드
 ├── doc/                    # 📊 결과 파형 스크린샷 또는 보고서  
-└── val/                    # 📝 Verilog 문법 공부자료
+└── sim/                    # 📝 테스트벤치와 시뮬레이션 관련 파일
 ```
 
 ## 🚀 일반 사용 방법
