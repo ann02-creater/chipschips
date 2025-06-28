@@ -1,19 +1,32 @@
-# chipschips
+# ChipsChips - Verilog 디지털 회로 설계 프로젝트
 
-## 프로젝트 개요
-이 저장소는 Verilog 기반 디지털 회로 설계를 위한 템플릿입니다. VS Code에서 코딩 후 Vivado에서 시뮬레이션을 실행하도록 구성되어 있습니다.
+## 📖 프로젝트 개요
+NEXYS A7 FPGA 보드를 활용한 **Verilog 디지털 회로 설계 프로젝트 모음**입니다.
 
-## 디렉토리 설명
-- `src/`: 주요 Verilog 소스코드
-- `sim/`: 테스트벤치와 시뮬레이션 관련 파일
-- `doc/`: 결과 파형 스크린샷 또는 pdf 보고서
+## 📂 전체 디렉토리 구조
+```
+chipschips/
+├── src/                    # 🔧 프로젝트별 Verilog 소스코드
+│   └── stopwatch/          # 📁 프로젝트 1: 모듈식 스톱워치
+├── sources_1/new/          # 📚 참고용 기존 소스코드
+├── doc/                    # 📊 결과 파형 스크린샷 또는 보고서  
+└── val/                    # 📝 Verilog 문법 공부자료
+```
 
-## 사용 방법
-1. 코드는 VS Code에서 작성합니다.
-2. 팀원은 Vivado에서 `.v` 파일을 import하여 실행합니다.
-3. 결과물은 `doc/`에 저장해 공유합니다.
+## 🚀 일반 사용 방법
 
-# 1 Stop Watch(start, stop, reset 기능포함)
+### **Vivado 워크플로우**
+1. **프로젝트 생성**: Vivado에서 새 프로젝트 생성
+2. **보드 선택**: NEXYS A7 보드 선택  
+3. **소스 추가**: 해당 프로젝트 폴더의 `.v` 파일들 추가
+4. **Top 모듈 설정**: `*_top.v` 파일을 top module로 설정
+5. **시뮬레이션**: `*_tb.v` 파일로 테스트벤치 실행
+6. **구현**: Synthesis → Implementation → Bitstream 생성
+
+# 📁 프로젝트 1: 모듈식 스톱워치
+
+> **위치**: `src/stopwatch/`  
+> **기능**: Start/Stop/Reset 기능을 갖춘 정밀 스톱워치 (MM:SS.CC 형식)
 
 ## 📁 Files
 
@@ -37,13 +50,13 @@
 
 🔗 **통합 모듈**
 
-5. **nexys_a7_stopwatch_top.v** - 최상위 통합 모듈
+5. **stopwatch_top.v** - 최상위 통합 모듈
    - 모든 서브모듈 연결
    - NEXYS A7 핀 매핑
 
 🧪 **테스트**
 
-6. **nexys_a7_stopwatch_tb.v** - 종합 테스트벤치
+6. **stopwatch_tb.v** - 종합 테스트벤치
    - 각 모듈별 개별 테스트
    - 통합 시나리오 테스트
 
@@ -52,6 +65,11 @@
 - **모듈식 설계**: 각 기능별로 독립적인 모듈
 - **8비트 시프트 레지스터**: 효율적인 디바운싱
 - **정확한 타이밍**: 1ms 단위 정밀 측정
+
+## 🎮 사용법
+- **BTNC**: Start/Stop 토글
+- **BTNU**: Reset
+- **디스플레이**: 8자리 7세그먼트에 `MM:SS.CC` 형식 표시
 
 ## 🚀 How to Simulate
 ```bash
