@@ -35,25 +35,23 @@ chipschips/
    - 100MHz → 1ms (스톱워치용)
    - 100MHz → 8kHz (디스플레이 주사용)
 
-
-
-3. **stopwatch_counter.v** - 스톱워치 핵심 로직
+2. **stopwatch_counter.v** - 스톱워치 핵심 로직
    - MM:SS.CC 형식 시간 계산
    - Start/Stop/Reset 제어
 
-4. **seven_segment_display.v** - 7세그먼트 컨트롤러
+3. **seven_segment_display.v** - 7세그먼트 컨트롤러
    - 8자리 시분할 주사
    - BCD 디코딩
 
 🔗 **통합 모듈**
 
-5. **stopwatch_top.v** - 최상위 통합 모듈
+4. **stopwatch_top.v** - 최상위 통합 모듈
    - 모든 서브모듈 연결
    - NEXYS A7 핀 매핑
 
 🧪 **테스트**
 
-6. **stopwatch_tb.v** - 종합 테스트벤치
+5. **stopwatch_tb.v** - 종합 테스트벤치
    - 각 모듈별 개별 테스트
    - 통합 시나리오 테스트
 
