@@ -35,9 +35,7 @@ chipschips/
    - 100MHz → 1ms (스톱워치용)
    - 100MHz → 8kHz (디스플레이 주사용)
 
-2. **button_debouncer.v** - 8비트 시프트 레지스터 디바운서
-   - 8ms 안정화 시간
-   - 노이즈 제거 및 edge detection
+
 
 3. **stopwatch_counter.v** - 스톱워치 핵심 로직
    - MM:SS.CC 형식 시간 계산
