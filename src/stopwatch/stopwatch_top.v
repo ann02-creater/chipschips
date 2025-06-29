@@ -14,11 +14,6 @@ module stopwatch_top(
     wire clk_1ms;
     wire clk_refresh;
     
-    wire btnc_clean;
-    wire btnu_clean;
-    wire btnc_edge;
-    wire btnu_edge;
-    
     wire running;
     wire [6:0] centiseconds;
     wire [5:0] seconds;
@@ -31,30 +26,13 @@ module stopwatch_top(
         .clk_refresh(clk_refresh)
     );
     
-    button_debouncer u_btnc_debouncer (
-        .clk(CLK100MHZ),
-        .clk_1ms(clk_1ms),
-        .rst_n(rst_n),
-        .btn_in(BTNC),
-        .btn_out(btnc_clean),
-        .btn_edge(btnc_edge)
-    );
-    
-    button_debouncer u_btnu_debouncer (
-        .clk(CLK100MHZ),
-        .clk_1ms(clk_1ms),
-        .rst_n(rst_n),
-        .btn_in(BTNU),
-        .btn_out(btnu_clean),
-        .btn_edge(btnu_edge)
-    );
     
     stopwatch_counter u_stopwatch_counter (
         .clk(CLK100MHZ),
         .clk_1ms(clk_1ms),
         .rst_n(rst_n),
-        .start_edge(btnc_edge),
-        .reset_edge(btnu_edge),
+        .start_edge(BTNC),
+        .reset_edge(BTNU),
         .running(running),
         .centiseconds(centiseconds),
         .seconds(seconds),
