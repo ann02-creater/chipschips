@@ -7,12 +7,12 @@ module clock_divider(
     output reg clk_refresh
 );
 
-    reg [15:0] counter_1ms;
     parameter COUNT_1MS = 16'd49999;
+    reg [15:0] counter_1ms;
     
-    reg [12:0] counter_refresh;
     parameter COUNT_REFRESH = 13'd6249;
-    
+    reg [12:0] counter_refresh;
+
     always @(posedge clk_100mhz or negedge rst_n) begin
         if (!rst_n) begin
             counter_1ms <= 16'd0;
