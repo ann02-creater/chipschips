@@ -9,7 +9,8 @@ module stopwatch_counter(
     output reg running,
     output reg [6:0] centiseconds,
     output reg [5:0] seconds,
-    output reg [5:0] minutes
+    output reg [5:0] minutes,
+    output reg [4:0] hours
 );
 
     reg clk_1ms_prev;
@@ -40,10 +41,12 @@ module stopwatch_counter(
             centiseconds <= 7'd0;
             seconds <= 6'd0;
             minutes <= 6'd0;
+            hours <= 5'd0;
         end else if (reset_edge) begin
             centiseconds <= 7'd0;
             seconds <= 6'd0;
             minutes <= 6'd0;
+            hours <= 5'd0;
         end else if (running && clk_1ms_edge) begin
             if (centiseconds >= 7'd99) begin
                 centiseconds <= 7'd0;
@@ -51,6 +54,11 @@ module stopwatch_counter(
                     seconds <= 6'd0;
                     if (minutes >= 6'd59) begin
                         minutes <= 6'd0;
+                        if (hours >= 5'd23) begin
+                            hours <= 5'd0;
+                        end else begin
+                            hours <= hours + 1;
+                        end
                     end else begin
                         minutes <= minutes + 1;
                     end

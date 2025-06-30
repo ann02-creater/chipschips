@@ -4,6 +4,7 @@ module seven_segment_display(
     input wire clk,
     input wire clk_refresh,
     input wire rst_n,
+    input wire [4:0] hours,
     input wire [5:0] minutes,
     input wire [5:0] seconds,
     input wire [6:0] centiseconds,
@@ -15,6 +16,8 @@ module seven_segment_display(
     reg clk_refresh_prev;
     wire clk_refresh_edge;
     
+    reg [3:0] hours_tens;
+    reg [3:0] hours_ones;
     reg [3:0] minutes_tens;
     reg [3:0] minutes_ones;
     reg [3:0] seconds_tens;
@@ -36,6 +39,8 @@ module seven_segment_display(
     assign clk_refresh_edge = clk_refresh & ~clk_refresh_prev;
     
     always @(*) begin
+        hours_tens = hours / 10;
+        hours_ones = hours % 10;
         minutes_tens = minutes / 10;
         minutes_ones = minutes % 10;
         seconds_tens = seconds / 10;
@@ -56,12 +61,12 @@ module seven_segment_display(
         case (digit_select)
             3'd0: current_bcd = centiseconds_ones;
             3'd1: current_bcd = centiseconds_tens;
-            3'd2: current_bcd = 4'hF;
-            3'd3: current_bcd = seconds_ones;
-            3'd4: current_bcd = seconds_tens;
-            3'd5: current_bcd = 4'hF;
-            3'd6: current_bcd = minutes_ones;
-            3'd7: current_bcd = minutes_tens;
+            3'd2: current_bcd = seconds_ones;
+            3'd3: current_bcd = seconds_tens;
+            3'd4: current_bcd = minutes_ones;
+            3'd5: current_bcd = minutes_tens;
+            3'd6: current_bcd = hours_ones;
+            3'd7: current_bcd = hours_tens;
             default: current_bcd = 4'h0;
         endcase
     end

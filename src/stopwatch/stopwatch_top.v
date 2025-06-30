@@ -2,8 +2,7 @@
 
 module stopwatch_top(
     input wire CLK100MHZ,
-    input wire BTNC,
-    input wire BTNU,
+    input wire [15:0] SW,
     output wire [6:0] SEG,
     output wire [7:0] AN
 );
@@ -18,6 +17,7 @@ module stopwatch_top(
     wire [6:0] centiseconds;
     wire [5:0] seconds;
     wire [5:0] minutes;
+    wire [4:0] hours;
     
     clock_divider u_clock_divider (
         .clk_100mhz(CLK100MHZ),
@@ -31,18 +31,20 @@ module stopwatch_top(
         .clk(CLK100MHZ),
         .clk_1ms(clk_1ms),
         .rst_n(rst_n),
-        .start_edge(BTNC),
-        .reset_edge(BTNU),
+        .start_edge(SW[0]),
+        .reset_edge(SW[1]),
         .running(running),
         .centiseconds(centiseconds),
         .seconds(seconds),
-        .minutes(minutes)
+        .minutes(minutes),
+        .hours(hours)
     );
     
     seven_segment_display u_seven_segment_display (
         .clk(CLK100MHZ),
         .clk_refresh(clk_refresh),
         .rst_n(rst_n),
+        .hours(hours),
         .minutes(minutes),
         .seconds(seconds),
         .centiseconds(centiseconds),
