@@ -36,7 +36,7 @@ chipschips/
    - 100MHz → 8kHz (디스플레이 주사용)
 
 2. **stopwatch_counter.v** - 스톱워치 핵심 로직
-   - MM:SS.CC 형식 시간 계산
+   - HH:MM:SS.CC 형식 시간 계산
    - Start/Stop/Reset 제어
 
 3. **seven_segment_display.v** - 7세그먼트 컨트롤러
