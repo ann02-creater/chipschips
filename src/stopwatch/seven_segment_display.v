@@ -83,12 +83,6 @@ module seven_segment_display(
             4'h7: seg_pattern = 7'b1111000;
             4'h8: seg_pattern = 7'b0000000;
             4'h9: seg_pattern = 7'b0010000;
-            4'hA: seg_pattern = 7'b0001000;
-            4'hB: seg_pattern = 7'b0000011;
-            4'hC: seg_pattern = 7'b1000110;
-            4'hD: seg_pattern = 7'b0100001;
-            4'hE: seg_pattern = 7'b0000110;
-            4'hF: seg_pattern = 7'b1111111;
             default: seg_pattern = 7'b1111111;
         endcase
     end
