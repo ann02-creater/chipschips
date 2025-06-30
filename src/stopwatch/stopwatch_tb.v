@@ -10,8 +10,8 @@ module stopwatch_tb();
     integer i, j;
     reg [31:0] timer;
     
-    wire clk_1ms = dut.clk_1ms;
-    wire clk_refresh = dut.clk_refresh;
+    wire clock_1ms = dut.clock_1ms;
+    wire clock_refresh = dut.clock_refresh;
     wire running = dut.running;
     wire [6:0] centiseconds = dut.centiseconds;
     wire [5:0] seconds = dut.seconds;
@@ -49,7 +49,7 @@ module stopwatch_tb();
         #10000000;
         
         for (i = 0; i < 5; i = i + 1) begin
-            @(posedge clk_1ms);
+            @(posedge clock_1ms);
         end
         
         #10000000;

@@ -1,9 +1,9 @@
 `timescale 1ns / 1ps
 
 module seven_segment_display(
-    input wire clk,
-    input wire clk_refresh,
-    input wire rst_n,
+    input wire clock,
+    input wire clock_refresh,
+    input wire reset_n,
     input wire [4:0] hours,
     input wire [5:0] minutes,
     input wire [5:0] seconds,
@@ -13,8 +13,8 @@ module seven_segment_display(
 );
 
     reg [2:0] digit_select;
-    reg clk_refresh_prev;
-    wire clk_refresh_edge;
+    reg clock_refresh_prev;
+    wire clock_refresh_edge;
     
     reg [3:0] hours_tens;
     reg [3:0] hours_ones;
@@ -28,15 +28,15 @@ module seven_segment_display(
     reg [3:0] current_bcd;
     reg [6:0] seg_pattern;
     
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            clk_refresh_prev <= 1'b0;
+    always @(posedge clock or negedge reset_n) begin
+        if (!reset_n) begin
+            clock_refresh_prev <= 1'b0;
         end else begin
-            clk_refresh_prev <= clk_refresh;
+            clock_refresh_prev <= clock_refresh;
         end
     end
     
-    assign clk_refresh_edge = clk_refresh & ~clk_refresh_prev;
+    assign clock_refresh_edge = clock_refresh & ~clock_refresh_prev;
     
     always @(*) begin
         hours_tens = hours / 10;
@@ -49,10 +49,10 @@ module seven_segment_display(
         centiseconds_ones = centiseconds % 10;
     end
     
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always @(posedge clock or negedge reset_n) begin
+        if (!reset_n) begin
             digit_select <= 3'd0;
-        end else if (clk_refresh_edge) begin
+        end else if (clock_refresh_edge) begin
             digit_select <= digit_select + 1;
         end
     end
@@ -98,8 +98,8 @@ module seven_segment_display(
         an[digit_select] = 1'b0;
     end
     
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always @(posedge clock or negedge reset_n) begin
+        if (!reset_n) begin
             seg <= 7'b1111111;
         end else begin
             seg <= seg_pattern;

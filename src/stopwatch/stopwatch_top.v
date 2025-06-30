@@ -7,11 +7,11 @@ module stopwatch_top(
     output wire [7:0] AN
 );
 
-    wire rst_n;
-    assign rst_n = 1'b1;
+    wire reset_n;
+    assign reset_n = 1'b1;
     
-    wire clk_1ms;
-    wire clk_refresh;
+    wire clock_1ms;
+    wire clock_refresh;
     
     wire running;
     wire [6:0] centiseconds;
@@ -20,17 +20,17 @@ module stopwatch_top(
     wire [4:0] hours;
     
     clock_divider u_clock_divider (
-        .clk_100mhz(CLK100MHZ),
-        .rst_n(rst_n),
-        .clk_1ms(clk_1ms),
-        .clk_refresh(clk_refresh)
+        .clock_100mhz(CLK100MHZ),
+        .reset_n(reset_n),
+        .clock_1ms(clock_1ms),
+        .clock_refresh(clock_refresh)
     );
     
     
     stopwatch_counter u_stopwatch_counter (
-        .clk(CLK100MHZ),
-        .clk_1ms(clk_1ms),
-        .rst_n(rst_n),
+        .clock(CLK100MHZ),
+        .clock_1ms(clock_1ms),
+        .reset_n(reset_n),
         .start_edge(SW[0]),
         .reset_edge(SW[1]),
         .running(running),
@@ -41,9 +41,9 @@ module stopwatch_top(
     );
     
     seven_segment_display u_seven_segment_display (
-        .clk(CLK100MHZ),
-        .clk_refresh(clk_refresh),
-        .rst_n(rst_n),
+        .clock(CLK100MHZ),
+        .clock_refresh(clock_refresh),
+        .reset_n(reset_n),
         .hours(hours),
         .minutes(minutes),
         .seconds(seconds),
