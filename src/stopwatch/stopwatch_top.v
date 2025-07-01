@@ -7,7 +7,7 @@ module stop_watch_top(
     reg [2:0] sel;
     wire tc_100Hz, tc_1MHz;
     
-    clock_divider U_CLKDIV( clk, reset, tc_100Hz, tc_1MHz);
+    clock_divider U_CLKDIV( clk, reset, en, tc_100Hz, tc_1MHz);
 
 always @(posedge clk or posedge reset) begin
 if(reset) begin 
