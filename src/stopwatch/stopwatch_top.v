@@ -33,9 +33,9 @@ module stop_watch_top(
     counter_mod6 (clk, reset, tc4, Q5, tc5);
     // 1hour bcd counter
     counter_bcd(clk, reset, tc5, Q6, tc6);
-    
     // 10hour bcd counter
     counter_bcd(clk, reset, tc6, Q7, tc7);
+    
     // 7-segment 디코더
     sseg_decoder U_DECODER (data, .sseg);
     
