@@ -1,11 +1,23 @@
 module stop_watch_top(
-    input wire clk, reset, btn;
-                      
-    output reg [6:0] SEG, [7:0] AN);
+    input wire clk, reset, btn,                      
+    output reg [6:0] SEG, [7:0] AN
+);
     
     wire toggle;
-    wire [2:0] sel;
+    reg [2:0] sel;
     wire tc_100Hz, tc_1MHz;
+    
+clock_diver U_CLKDIV( clk, reset, tc_100Hz, tc_1MHz);
+
+always @(posedge clk or posedge reset) begin
+if(reset) begin 
+sel <=3'd0;
+end else if(tc_100Hz) begin
+sel <= sel+1;
+end 
+end  
+
+
     
    
     wire [3:0] Q0, Q1, Q2, Q4, Q6, Q7;
@@ -14,9 +26,9 @@ module stop_watch_top(
     
    
     reg [3:0] data;
-    reg [6:0] sseg;
+    wire [6:0] sseg;
     
-    // 디바운스 모듈
+    // �뵒諛붿슫�뒪 紐⑤뱢
     debounce U_DEBOUNCE (clk, reset, btn, toggle);
 
     //10ms bcd counter  Q0 = 0
@@ -36,8 +48,8 @@ module stop_watch_top(
     // 10hour bcd counter
     counter_bcd(clk, reset, tc6, Q7, tc7);
     
-    // 7-segment 디코더
-    sseg_decoder U_DECODER (data, .sseg);
+    // 7-segment �뵒肄붾뜑
+//    sseg_decoder U_DECODER (data, .sseg);
     
     always @(*) begin
         case(sel)
