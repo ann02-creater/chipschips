@@ -1,6 +1,7 @@
 module stop_watch_top(
     input wire clk, reset, btn,                      
-    output reg [6:0] SEG, [7:0] AN
+    output reg [6:0] SEG,
+    output reg [7:0] AN
 );
     
     wire toggle;
