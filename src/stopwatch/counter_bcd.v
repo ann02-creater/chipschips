@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 module counter_bcd(
     input wire clk,
     input wire reset,
