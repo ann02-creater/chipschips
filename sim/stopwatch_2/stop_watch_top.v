@@ -21,7 +21,6 @@ module stop_watch_top(
     // 1hour bcd counter
     // 10hour bcd counter
     
-    // 3bit counter 0:7 켜야하는 7segment LED를 선택
 //    counter_3bit U_CNT3 (clk, reset, tc_1MHz, sel);
 //    selector U_SEL (sel, Q0 ~ Q7, AN, SEG);
     
