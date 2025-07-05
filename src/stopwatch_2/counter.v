@@ -1,4 +1,4 @@
-module counter #(
+module counter1 #(
     parameter MaxCount = 6,
               DataWidth = 4
 )(
@@ -24,7 +24,7 @@ module counter #(
 
 endmodule
 
-module counter #(
+module counter2 #(
     parameter MaxCount = 9,
               DataWidth = 4
 )(
