@@ -1,3 +1,14 @@
+module mux_32bit (
+    input wire [31:0] a,
+    input wire [31:0] b,
+    input wire sel,
+    output wire [31:0] y
+);
+
+    assign y = sel ? b : a;
+
+endmodule
+
 module ssdecoder(
     input wire [3:0] data,
     output reg [6:0] seg

@@ -24,22 +24,25 @@ module counter #(
 
 endmodule
 
-module counter_bcd(
+module counter #(
+    parameter MaxCount = 9,
+              DataWidth = 4
+)(
     input wire clk,
     input wire reset,
     input wire en,
-    output reg [3:0] Q,
+    output reg [DataWidth-1:0] Q,
     output wire TC
 );
 
-    assign TC = (Q == 4'd9) & en;
+    assign TC = (Q == MaxCount) & en;
     
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            Q <= 4'd0;
+            Q <= 0;
         end else if (en) begin
             if (TC)
-                Q <= 4'd0;
+                Q <= 0;
             else
                 Q <= Q + 1;
         end
@@ -47,25 +50,4 @@ module counter_bcd(
 
 endmodule
 
-module counter_mod6(
-    input wire clk,
-    input wire reset,
-    input wire en,
-    output reg [2:0] Q,
-    output wire TC
-);
-
-    assign TC = (Q == 3'd5) & en;
-    
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            Q <= 3'd0;
-        end else if (en) begin
-            if (TC)
-                Q <= 3'd0;
-            else
-                Q <= Q + 1;
-        end
-    end
-
-endmodule
+//각 자리마다 둘 중 알맞은 모듈이 적용되고, TC값이 다음 자릿수의 en값이 됨. 즉, U1.en = TC0, U2.en = TC1...
