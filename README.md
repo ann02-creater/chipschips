@@ -8,7 +8,7 @@ NEXYS A7 FPGA 보드를 활용한 **Verilog 디지털 회로 설계 프로젝트
 chipschips/
 ├── src/                    # 🔧 프로젝트별 Verilog 소스코드
 │   └── stopwatch/          # 📁 프로젝트 1: 모듈식 스톱워치
-│   └── stopwatch_2/        # 📁 프로젝트 2: 고급 스톱워치
+│   └── stopwatch_2/        # 📁 프로젝트 2: 모듈식 스톱워치(+데이터 저장기능 탑재)
 │   └── Uart/               # 📁 프로젝트 3: UART 통신
 ├── doc/                    # 📊 결과 파형 스크린샷 또는 보고서  
 └── sim/                    # 📝 테스트벤치와 시뮬레이션 관련 파일(+.xdc파일)
