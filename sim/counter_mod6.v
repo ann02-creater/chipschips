@@ -17,6 +17,7 @@ module counter_mod6(
             else
                 Q <= Q + 1;
         end
+        kkhkhkhjgyyifffffff
     end
 
 endmodule
