@@ -11,7 +11,8 @@ module watch_counter (
     
     wire tc0, tc1, tc2, tc3, tc4, tc5, tc6, tc7;
 
-    
+    //counter.v에서 정의한 counter1, counter2 모듈들을 8개의 instance로 연결함.
+    //각 자릿수가 연쇄적으로 연결되어 있는 실제 스톱워치 시간 표현 모듈.
     counter2 #(.MaxCount(9), .DataWidth(4)) U_CNT0 (
         .clk(clk),
         .reset(reset),

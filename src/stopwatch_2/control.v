@@ -13,7 +13,7 @@ module control(
             
     reg [2:0] current_state, next_state;
 
-    // State Memory
+    // State Memory : 클록 엣지마다 현재 상태를 업데이트하는 역할
     always@(posedge clk, posedge reset) begin
         if(reset) begin
             current_state <= IDLE;
@@ -55,13 +55,4 @@ module control(
 
 endmodule
 
-module mux_32bit(
-    input wire [31:0] a,
-    input wire [31:0] b,
-    input wire sel,
-    output wire [31:0] y
-);
 
-    assign y = sel ? b : a;
-
-endmodule
