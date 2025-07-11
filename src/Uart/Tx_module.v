@@ -14,12 +14,12 @@ module uart_tx(
                STOP = 3'd4;
 
     reg [2:0] state;
-    reg [2:0] bit_cnt;
-    reg [7:0] tx_buffer;
+    reg [2:0] bit_cnt;//현재 송신중인 bit위치 추적용. 몇번째 switch인지 확인함.
+    reg [7:0] tx_buffer;//tx_buffer[bt_cnt]로 1-bit짜리 switch 8개의 값을 하나로 묶어둔 것.
     reg parity_bit;
-    reg btn_prev, btn_pulse;
+    reg btn_prev, btn_pulse;//button edge 확인용 register
 
-    // Button edge detection
+    // Button edge detection, 버튼의  rising edge를 검출하는 용도(버튼을 누르는 순간, rising edge에서만 btn_pulse=1이 되면서 단발성 송신 보장. 안그럼 누르는 내내 1이됨.)
     always @(posedge clk, posedge reset) begin
         if (reset) begin
             btn_prev <= 0;
