@@ -12,14 +12,34 @@ module renderer(
     // Define the color for each cell
     always @(*) begin
         if(video_on) begin
-            integer cell_x = x / 213;
-            integer cell_y = y / 160;
-            integer cell = cell_y*3+cell_x;
-            if(board[cell]==1) {r,g,b}=RED;
-            else if(board[cell]==2) {r,g,b}=GREEN;
-            else {r,g,b}=BLACK;
-            if(cell==cursor && ((x%213<3)||(x%213>210)||(y%160<3)||(y%160>157))) {r,g,b}=WHITE;
-        end else {r,g,b}=0;
+            cell_x = x / 213;
+            cell_y = y / 160;
+            cell = cell_y*3+cell_x;
+            if(board[cell]==1) begin
+                r = RED[11:8];
+                g = RED[7:4];
+                b = RED[3:0];
+            end
+            else if(board[cell]==2) begin
+                r = GREEN[11:8];
+                g = GREEN[7:4];
+                b = GREEN[3:0];
+            end
+            else begin
+                r = BLACK[11:8];
+                g = BLACK[7:4];
+                b = BLACK[3:0];
+            end
+            if(cell==cursor && ((x%213<3)||(x%213>210)||(y%160<3)||(y%160>157))) begin
+                r = WHITE[11:8];
+                g = WHITE[7:4];
+                b = WHITE[3:0];
+            end
+        end else begin
+            r = 4'b0;
+            g = 4'b0;
+            b = 4'b0;
+        end
     end
 
 // Assign the color to VGA output

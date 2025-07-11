@@ -1,4 +1,4 @@
-module vga_controller(
+module scan_gen(
     input wire clk,
     input wire reset,
     output reg HS, VS,
