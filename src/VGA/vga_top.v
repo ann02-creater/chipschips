@@ -9,7 +9,7 @@ module vga_top (
 );
 
     wire clk_25;
-    clk25_chain u_clk25 (
+    clk25 u_clk25 (
         .clk   (clk),
         .reset (reset),
         .clk25 (clk_25)
@@ -17,7 +17,7 @@ module vga_top (
 
     wire [9:0] x;
     wire [9:0] y;
-    wire       video_on;
+    wire       en;
     vga_sync u_sync (
         .clk      (clk_25),
         .reset    (reset),
@@ -25,7 +25,7 @@ module vga_top (
         .y        (y),
         .hsync    (HS),
         .vsync    (VS),
-        .video_on (video_on)
+        .en (en)
     );
 
     wire [3:0] red;
@@ -35,7 +35,7 @@ module vga_top (
     vga_graphics u_grp (
         .x   (x),
         .y   (y),
-        .video_on  (video_on),
+        .en  (en),
         .red   (red),
         .green (green),
         .blue  (blue)
