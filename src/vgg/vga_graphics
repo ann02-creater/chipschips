@@ -7,8 +7,8 @@ module vga_graphics_outline3x3 (
     output reg [3:0] blue
 );
 
-localparam Wide = 213;   // 640 / 3
-localparam High = 160;   // 480 / 3
+localparam CELL_W = 213;   // 640 / 3
+localparam CELL_H = 160;   // 480 / 3
 localparam LINE_W =   5;
 
 wire [9:0] rel_x = x % CELL_W;
