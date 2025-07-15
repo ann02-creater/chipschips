@@ -1,7 +1,7 @@
 module vga_top (
     input  wire       clk,
     input  wire       reset,
-    input  wire [0:0] switches,
+    input  wire       circle_sw,
     output wire       VGA_HS,
     output wire       VGA_VS,
     output wire [3:0] VGA_R,
@@ -42,14 +42,14 @@ module vga_top (
 
     // Instantiate the Block Memory Generator IP (replace blk_mem_gen_0 if the name is different)
     blk_mem_gen_0 u_image_rom (
-        .clka  (clk25),
-        .addra (rom_addr),
-        .douta (rom_data)
+        .clka(clk25),
+        .addra(rom_addr),
+        .douta(rom_data) 
     );
-
+    
     // Instantiate the procedural graphics generator
     vga_graphics u_grp (
-        .x(x), .y(y), .en(en), .sw(switches[0]),
+        .x(x), .y(y), .en(en), .sw(circle_sw),
         .red(graphics_r), .green(graphics_g), .blue(graphics_b)
     );
 
@@ -59,9 +59,9 @@ module vga_top (
     assign image_b = rom_data[3:0];
 
     // MUX to select between image from BRAM or procedural graphics
-    assign VGA_R = switches[0] ? image_r : graphics_r;
-    assign VGA_G = switches[0] ? image_g : graphics_g;
-    assign VGA_B = switches[0] ? image_b : graphics_b;
+    assign VGA_R = circle_sw ? image_r : graphics_r;
+    assign VGA_G = circle_sw ? image_g : graphics_g;
+    assign VGA_B = circle_sw ? image_b : graphics_b;
 
 endmodule
 
