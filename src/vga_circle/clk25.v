@@ -1,18 +1,19 @@
-module clk25 (                                                       
- input  wire clk,                                                 
-    input  wire reset,                                              
-    output wire clk25                                                
-);                                                                  
-  reg [1:0] r_count;                                               
-                                                                   
-  always @(posedge clk or posedge reset) begin                     
-      if (reset) begin                                             
-            r_count <= 2'b0;                                         
-        end else begin                                               
-            r_count <= r_count + 1;                                  
-       end                                                          
-   end                                                              
-                                                                     
-    assign clk25 = r_count[1];                                       
-                                                                                                                            
-endmodule 
+\module clk25 (
+    input  wire clk,
+    input  wire reset,
+    output wire clk25
+);
+    wire q0;
+    counter #(
+        .MaxCount  (3),
+        .DataWidth (2)
+    ) U_DIV4 (
+        .clk   (clk),
+        .reset (reset),
+        .en    (1'b1),
+        .Q     (q0),
+        .TC    ()
+    );
+    assign clk25 = q0[1];
+
+endmodule
