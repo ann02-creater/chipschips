@@ -14,5 +14,5 @@ module clk25 (
    end                                                              
                                                                      
     assign clk25 = r_count[1];                                       
-                                                                                                                                │
+                                                                                                                            
 endmodule 
