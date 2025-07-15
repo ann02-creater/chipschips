@@ -11,8 +11,8 @@ localparam Wide = 213;   // 640 / 3
 localparam High = 160;   // 480 / 3
 localparam LINE_W =   5;
 
-wire [9:0] rel_x = x % CELL_W;
-wire [9:0] rel_y = y % CELL_H;
+    wire [9:0] rel_x = x % Wide;
+    wire [9:0] rel_y = y % High;
 
 wire border =
        (rel_x < LINE_W)
