@@ -26,25 +26,42 @@ module vga_top (
         .y        (y),
         .hsync    (VGA_HS),
         .vsync    (VGA_VS),
-        .en (en)
+        .en       (en)
     );
 
-    wire [3:0] red;
-    wire [3:0] green;
-    wire [3:0] blue;
+    // BRAM signals
+    wire [18:0] rom_addr;
+    wire [11:0] rom_data;
 
+    // Graphics and Image color signals
+    wire [3:0] graphics_r, graphics_g, graphics_b;
+    wire [3:0] image_r, image_g, image_b;
+
+    // Calculate BRAM address from x, y coordinates
+    assign rom_addr = (en) ? (y * 640) + x : 0;
+
+    // Instantiate the Block Memory Generator IP (replace blk_mem_gen_0 if the name is different)
+    blk_mem_gen_0 u_image_rom (
+        .clka  (clk25),
+        .addra (rom_addr),
+        .douta (rom_data)
+    );
+
+    // Instantiate the procedural graphics generator
     vga_graphics u_grp (
-        .x     (x),
-        .y     (y),
-        .en    (en),
-        .sw    (switches[0]),
-        .red   (red),
-        .green (green),
-        .blue  (blue)
+        .x(x), .y(y), .en(en), .sw(switches[0]),
+        .red(graphics_r), .green(graphics_g), .blue(graphics_b)
     );
 
-    assign VGA_R = red;
-    assign VGA_G = green;
-    assign VGA_B = blue;
+    // Split 12-bit BRAM data into R, G, B
+    assign image_r = rom_data[11:8];
+    assign image_g = rom_data[7:4];
+    assign image_b = rom_data[3:0];
+
+    // MUX to select between image from BRAM or procedural graphics
+    assign VGA_R = switches[0] ? image_r : graphics_r;
+    assign VGA_G = switches[0] ? image_g : graphics_g;
+    assign VGA_B = switches[0] ? image_b : graphics_b;
 
 endmodule
+
