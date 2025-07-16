@@ -34,7 +34,7 @@ wire mem_pixel;
     .reset   (1'b0),
     .rd_en   (en && center && circle_sw),
     .rd_addr(addr[15:0]),
-    .dout    (mem_pixel)
+    .rd_data (mem_pixel)
   );
 
 always @(*) begin

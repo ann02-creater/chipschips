@@ -54,8 +54,8 @@ module circle_ram #(
     .ena   (W_en | rd_en),
     .wea   (W_en),
     .addra (W_en ? wr_addr : rd_addr),
-    .dina  (rd_data),
-    .douta (W_data)
+    .dina  (W_data),
+    .douta (rd_data)
   );
 
 endmodule
