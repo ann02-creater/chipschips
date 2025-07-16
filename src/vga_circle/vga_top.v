@@ -2,7 +2,7 @@
 module vga_top (
     input  wire       clk,
     input  wire       reset,
-    input  wire [3:0] sw, // Use a 4-bit switch input
+    input  wire [8:0] sw, // Use a 9-bit switch input for 9 cells
     output wire       VGA_HS,
     output wire       VGA_VS,
     output wire [3:0] VGA_R,
