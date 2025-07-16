@@ -1,4 +1,4 @@
-\module clk25 (
+module clk25 (
     input  wire clk,
     input  wire reset,
     output wire clk25
@@ -11,9 +11,9 @@
         .clk   (clk),
         .reset (reset),
         .en    (1'b1),
-        .Q     (q0),
+        .Q     (clk25),
         .TC    ()
     );
-    assign clk25 = q0[1];
+
 
 endmodule
