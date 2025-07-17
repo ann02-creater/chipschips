@@ -26,6 +26,7 @@ wire [1:0] cell_y = y / HIGH;
 // Calculate cell index (0-8) from 3x3 grid position
 wire [3:0] cell_index = cell_y * 3 + cell_x;
 
+
 // Check if the current cell should show a circle based on corresponding switch
 reg active_cell;
 always @(*) begin
@@ -61,6 +62,40 @@ blk_mem_gen_0 u_image_rom (
 assign mem_pixel = |bram_data; 
 
 // Draw borders for all cells
+
+wire [7:0] rgb8_from_bram = bram_data[7:0]; 
+wire [11:0] corrected_color;
+// Correct the color format to match the VGA output
+// The BRAM data is assumed to be in RGB format, we need to convert it to
+// the 12-bit format used by VGA (R[3:0], G[3:0], B[3:0])
+// The conversion is done by shifting the bits to fit
+assign corrected_color = {rgb8_from_bram[7:6], 2'b00, rgb8_from_bram[5:3], 1'b0, rgb8_from_bram[2:0], 1'b0};
+
+always @(*) begin
+     if (!en) begin
+        // Off-screen area is black
+        red   = 4'h0;
+        green = 4'h0;
+        blue  = 4'h0;
+     end else if (active_cell && mem_pixel) begin
+         // 변환된 색상 값을 사용합니다.
+         // corrected_color는 {R, G, B} 순서로 되어 있습니다.
+        red   = corrected_color[11:8];
+        green = corrected_color[7:4];
+        blue  = corrected_color[3:0];
+     end else if (border) begin
+         // Cell borders are black
+        red   = 4'h0;
+        green = 4'h0;
+        blue  = 4'h0;
+     end else begin
+        // Cell background is white
+        red   = 4'hF;
+        green = 4'hF;
+        blue  = 4'hF;
+      end
+   end
+
 wire border = (rel_x < LINE_W) || (rel_x >= WIDE - LINE_W) ||
               (rel_y < LINE_W) || (rel_y >= HIGH - LINE_W);
 
