@@ -71,6 +71,7 @@ always @(*) begin
         default: active_cell = 1'b0;
     endcase
 end
+
 reg [15:0] bram_addr;// 셀내 상대좌표를 BRAM의 선형 주소로 변환
 
 always @(*) begin
@@ -84,6 +85,7 @@ blk_mem_gen_0 u_image_rom (
     .addra(bram_addr),
     .douta(bram_data)
 );
+
 
 
 wire [11:0] bram_data;//BRAM에서 읽어온 12비트 색상 데이터

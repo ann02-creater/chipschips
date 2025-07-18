@@ -17,7 +17,7 @@ module vga_top (
     clk_wiz_0 u_clk25 (
         .clk_in    (clk_in),
         .reset  (reset),
-        .clk_out  (clk25),
+        .clk25  (clk25),
         .locked (locked)
         
     );
