@@ -10,50 +10,50 @@ module vga_graphics(
     output reg  [3:0] blue
 );
 
-// Cell dimensions (640/3, 480/3)
-localparam WIDE = 213;
-localparam HIGH = 160;
+// Cell dimensions (640/3, 480/3) - reduced by 10 pixels each
+localparam WIDE = 203;
+localparam HIGH = 150;
 localparam LINE_W = 5;
 
 // Calculate relative coordinates within a cell
-reg [9:0] rel_x;
-reg [9:0] rel_y;
+reg [9:0] rel_x;// 셀 내부에서의 x좌표(0~202)
+reg [9:0] rel_y;// 셀 내부에서의 y좌표(0~149)
 
 // Calculate which cell the current (x,y) is in
-reg [1:0] cell_x;
-reg [1:0] cell_y;
+reg [1:0] cell_x;//몇번째 열인지(0,1,2)
+reg [1:0] cell_y;//몇번째 행인지(0,1,2)
 
 // Calculate cell index (0-8) from 3x3 grid position
 reg [3:0] cell_index;
 
 always @(*) begin
-    if (x < WIDE) begin
-        rel_x = x;
-        cell_x = 0;
-    end else if (x < 2*WIDE) begin
-        rel_x = x - WIDE;
-        cell_x = 1;
-    end else begin
-        rel_x = x - 2*WIDE;
-        cell_x = 2;
+    if (x < WIDE) begin //x<213
+        rel_x = x; //셀 내 상대좌표 = 절대 좌표
+        cell_x = 0;//첫번째 열
+    end else if (x < 2*WIDE) begin //213<= x <426
+        rel_x = x - WIDE; //셀내 상대좌표 = 절대 좌표 - 셀 너비
+        cell_x = 1; //두번째 열
+    end else begin //x >= 426
+        rel_x = x - 2*WIDE; //셀내 상대좌표 = 절대 좌표 - 2 * 셀 너비
+        cell_x = 2; //세번째 열
     end
     
-    if (y < HIGH) begin
-        rel_y = y;
-        cell_y = 0;
-    end else if (y < 2*HIGH) begin
-        rel_y = y - HIGH;
-        cell_y = 1;
+    if (y < HIGH) begin //y<160
+        rel_y = y; //셀 내 상대좌표 = 절대 좌표
+        cell_y = 0; //첫번째 행
+    end else if (y < 2*HIGH) begin 
+        rel_y = y - HIGH; //셀내 상대좌표 = 절대 좌표 - 셀 높이
+        cell_y = 1;//두번째 행
     end else begin
-        rel_y = y - 2*HIGH;
-        cell_y = 2;
+        rel_y = y - 2*HIGH; //셀내 상대좌표 = 절대 좌표 - 2 * 셀 높이
+        cell_y = 2;//세번째 행
     end
     
-    cell_index = cell_y * 3 + cell_x;
+    cell_index = cell_y * 3 + cell_x;/*첫번째 셀부터 0,1,2,
+                                                  3,4,5,
+                                                  6,7,8 의 순서로 인덱스 계산*/
 end
 
-
-wire mem_pixel; // Explicitly declare the wire for the memory pixel
 
 // Check if the current cell should show a circle based on corresponding switch
 reg active_cell;
@@ -71,12 +71,11 @@ always @(*) begin
         default: active_cell = 1'b0;
     endcase
 end
-reg [18:0] bram_addr;
+reg [15:0] bram_addr;// 셀내 상대좌표를 BRAM의 선형 주소로 변환
 
 always @(*) begin
-    bram_addr = rel_y * WIDE + rel_x;
+    bram_addr = rel_y * WIDE + rel_x;// 주소 = 행번호*폭 + 열번호
 end
-wire [11:0] bram_data;
 
 // Instantiate the Block Memory Generator for the circle image
 // This BRAM is now local to the graphics module
@@ -86,18 +85,10 @@ blk_mem_gen_0 u_image_rom (
     .douta(bram_data)
 );
 
-// For this design, we assume the circle is pre-loaded into the BRAM.
-// The circle_ram module is not needed if a .coe file is used with blk_mem_gen_0.
-// We will use the direct output of the BRAM.
-// Convert 8-bit BRAM data to 12-bit RGB
-wire [7:0] rgb8_from_bram = bram_data[7:0]; 
-wire [11:0] corrected_color;
-// Convert 8-bit RGB (3-3-2 format) to 12-bit RGB (4-4-4 format)
-// R[7:5] -> R[11:8], G[4:2] -> G[7:4], B[1:0] -> B[3:0]
-assign corrected_color = {rgb8_from_bram[7:5], 1'b0, rgb8_from_bram[4:2], 1'b0, rgb8_from_bram[1:0], 2'b00};
 
-// A simple check: if any bit in the 8-bit color is set, we consider it part of the circle.
-assign mem_pixel = |rgb8_from_bram; 
+wire [11:0] bram_data;//BRAM에서 읽어온 12비트 색상 데이터
+wire mem_pixel; // 현재 픽셀이 원의 일부인지 판단하는 불린 신호
+assign mem_pixel = |bram_data; // 1= 색상 데이터 있음 , 0= 모든 비트가 0이므로 배경영역임.
 
 // Draw borders for all cells
 wire border = (rel_x < LINE_W) || (rel_x >= WIDE - LINE_W) ||
@@ -111,9 +102,9 @@ always @(*) begin
         blue  = 4'h0;
     end else if (active_cell && mem_pixel) begin
         // Use converted 8-bit to 12-bit color
-        red   = corrected_color[11:8];
-        green = corrected_color[7:4];
-        blue  = corrected_color[3:0];
+        red   = bram_data[11:8];
+        green = bram_data[7:4];
+        blue  = bram_data[3:0];
     end else if (border) begin
         // Cell borders are black
         red   = 4'h0;
