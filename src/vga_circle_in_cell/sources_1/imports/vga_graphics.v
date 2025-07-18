@@ -13,7 +13,7 @@ module vga_graphics(
 // Cell dimensions (640/3, 480/3)
 localparam WIDE = 213;
 localparam HIGH = 160;
-localparam LINE_W = 5;
+localparam LINE_W = 3;
 
 // Calculate relative coordinates within a cell
 reg [9:0] rel_x;
