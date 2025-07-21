@@ -50,6 +50,7 @@ begin
         else if (state == `TXUL_IDLE)
         begin
             r_busy <= 1'b0;
+            tx_out <= 1'b1;  // IDLE 상태에서 high
             if ((send)&&(!r_busy))
             begin
                 r_busy <= 1'b1;
@@ -61,6 +62,17 @@ begin
                 state <= state + 1;
             else
                 state <= `TXUL_IDLE;
+                
+            // UART 데이터 출력 로직을 여기로 이동
+            if (zero_baud_counter)
+            begin
+                if (state == `TXUL_BIT_ZERO)
+                    tx_out <= 1'b0;  // Start bit
+                else if (state == `TXUL_STOP)
+                    tx_out <= 1'b1;  // Stop bit
+                else
+                    tx_out <= lcl_data[0];  // Data bits
+            end
         end 
     end
 end
@@ -68,15 +80,15 @@ end
 assign	busy = r_busy;
 
 // Working copy of data register
-initial	lcl_data = 8'hff;
 always @(posedge clk)
-    if ((send)&&(!busy))
+    if (reset)
+        lcl_data <= 8'hff;
+    else if ((send)&&(!busy))
         lcl_data <= data_in;
     else if (zero_baud_counter)
         lcl_data <= { 1'b1, lcl_data[7:1] };
 
 // Baud counter
-initial	baud_counter = 24'h00;
 always @(posedge clk)
     if (reset)
         baud_counter <= 24'h00;
@@ -86,22 +98,11 @@ always @(posedge clk)
         baud_counter <= baud_counter - 24'h01;
 
 always @(posedge clk)
-    zero_baud_counter <= (baud_counter == 24'h01);
-
-// UART transmit data
-always @(posedge clk)
     if (reset)
-        tx_out <= 1'b1;
-    else if (state == `TXUL_IDLE)
-        tx_out <= 1'b1;
-    else if (zero_baud_counter)
-    begin
-        if (state == `TXUL_BIT_ZERO)
-            tx_out <= 1'b0;  // Start bit
-        else if (state == `TXUL_STOP)
-            tx_out <= 1'b1;  // Stop bit
-        else
-            tx_out <= lcl_data[0];  // Data bits
-    end
+        zero_baud_counter <= 1'b0;
+    else
+        zero_baud_counter <= (baud_counter == 24'h01);
+
+// 중복된 tx_out 할당 블록 제거
 
 endmodule
