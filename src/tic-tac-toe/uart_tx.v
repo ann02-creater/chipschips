@@ -17,6 +17,14 @@ module uart_tx (
     reg [2:0] bit_cnt;
     reg [7:0] tx_buffer;
     reg send_prev, send_pulse;
+    wire baud_tick;
+
+    // Baud rate generator instance
+    baud_rate_gen u_baud_gen (
+        .clk(clk),
+        .reset(reset),
+        .baud_tick(baud_tick)
+    );
 
     // Button edge detection
     always @(posedge clk, posedge reset) begin
@@ -37,36 +45,38 @@ module uart_tx (
             tx_buffer <= 0;
             busy      <= 0;
         end else begin
-            case (state)
-                IDLE: begin
-                    busy <= 0;
-                    if (send_pulse) begin
-                        state     <= START;
-                        tx_buffer <= data_in;
-                        bit_cnt   <= 0;
-                        busy      <= 1;
+            if (baud_tick) begin
+                case (state)
+                    IDLE: begin
+                        busy <= 0;
+                        if (send_pulse) begin
+                            state     <= START;
+                            tx_buffer <= data_in;
+                            bit_cnt   <= 0;
+                            busy      <= 1;
+                        end
                     end
-                end
-                
-                START: begin
-                    state   <= DATA;
-                    bit_cnt <= 0;
-                end
-                
-                DATA: begin
-                    if (bit_cnt == 3'd7) begin
-                        state <= STOP;
-                    end else begin
-                        bit_cnt <= bit_cnt + 1;
+                    
+                    START: begin
+                        state   <= DATA;
+                        bit_cnt <= 0;
                     end
-                end
-                
-                STOP: begin
-                    state <= IDLE;
-                end
-                
-                default: state <= IDLE;
-            endcase
+                    
+                    DATA: begin
+                        if (bit_cnt == 3'd7) begin
+                            state <= STOP;
+                        end else begin
+                            bit_cnt <= bit_cnt + 1;
+                        end
+                    end
+                    
+                    STOP: begin
+                        state <= IDLE;
+                    end
+                    
+                    default: state <= IDLE;
+                endcase
+            end
         end
     end
 

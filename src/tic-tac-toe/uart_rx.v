@@ -12,31 +12,17 @@ module uart_rx (
         DATA  = 3'd2,
         STOP  = 3'd3;
 
-    localparam CLK_FREQ = 25_000_000;
-    localparam BAUD_RATE = 9600;
-    localparam BAUD_DIV = CLK_FREQ / BAUD_RATE / 16;
-
     reg [2:0] state;
     reg [2:0] bit_cnt;
     reg [7:0] shift_reg;
-    reg [15:0] baud_counter;
-    reg baud_tick;
+    wire baud_tick;
 
-    // Baud rate generator
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            baud_counter <= 0;
-            baud_tick <= 0;
-        end else begin
-            if (baud_counter >= BAUD_DIV - 1) begin
-                baud_counter <= 0;
-                baud_tick <= 1;
-            end else begin
-                baud_counter <= baud_counter + 1;
-                baud_tick <= 0;
-            end
-        end
-    end
+    // Baud rate generator instance for RX (16x oversampling)
+    baud_rate_gen_rx u_baud_gen_rx (
+        .clk(clk),
+        .reset(reset),
+        .baud_tick(baud_tick)
+    );
 
     // UART RX state machine
     always @(posedge clk or posedge reset) begin
