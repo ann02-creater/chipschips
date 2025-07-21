@@ -29,7 +29,25 @@ module ttt_ctrl (
     reg [1:0] current_player;
     integer i;
 
-    wire space_valid = space && (game_board[current_cell*2+1:current_cell*2] == 2'b00);
+    reg [1:0] current_cell_data;
+    
+    // 현재 셀 데이터 추출
+    always @(*) begin
+        case (current_cell)
+            4'd0: current_cell_data = game_board[1:0];
+            4'd1: current_cell_data = game_board[3:2];
+            4'd2: current_cell_data = game_board[5:4];
+            4'd3: current_cell_data = game_board[7:6];
+            4'd4: current_cell_data = game_board[9:8];
+            4'd5: current_cell_data = game_board[11:10];
+            4'd6: current_cell_data = game_board[13:12];
+            4'd7: current_cell_data = game_board[15:14];
+            4'd8: current_cell_data = game_board[17:16];
+            default: current_cell_data = 2'b00;
+        endcase
+    end
+    
+    wire space_valid = space && (current_cell_data == 2'b00);
     wire enter_valid = enter;
 
     // 게임 보드를 VGA 출력에 직접 연결
@@ -73,7 +91,17 @@ module ttt_ctrl (
                 end
                 S_PLACE_PIECE: begin
                     // 말 놓기
-                    game_board[current_cell*2+1:current_cell*2] <= current_player;
+                    case (current_cell)
+                        4'd0: game_board[1:0] <= current_player;
+                        4'd1: game_board[3:2] <= current_player;
+                        4'd2: game_board[5:4] <= current_player;
+                        4'd3: game_board[7:6] <= current_player;
+                        4'd4: game_board[9:8] <= current_player;
+                        4'd5: game_board[11:10] <= current_player;
+                        4'd6: game_board[13:12] <= current_player;
+                        4'd7: game_board[15:14] <= current_player;
+                        4'd8: game_board[17:16] <= current_player;
+                    endcase
                     current_player <= (current_player == PLAYER_X) ? PLAYER_O : PLAYER_X;
                     
                     // 승리 조건 검사
