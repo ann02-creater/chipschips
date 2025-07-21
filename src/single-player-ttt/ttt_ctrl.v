@@ -10,7 +10,7 @@ module ttt_ctrl (
     output reg         win_flag,
     output reg [3:0]   current_cell,
     output reg [8:0]   cell_select_flag,
-    output reg [17:0]  board_out  // VGA 연결용 (2비트 x 9개 셀)
+    output reg [8:0]   board_out  // VGA 연결용 (9비트, 각 셀 on/off)
 );
 
     localparam
@@ -24,28 +24,11 @@ module ttt_ctrl (
         EMPTY = 2'b00;
 
     reg [1:0] state, next_state;
-    reg [17:0] game_board;
+    reg [8:0] game_board;  // 9비트로 변경 (각 셀 on/off)
     integer i;
 
-    reg [1:0] current_cell_data;
-    
-    // 현재 셀 데이터 추출
-    always @(*) begin
-        case (current_cell)
-            4'd0: current_cell_data = game_board[1:0];
-            4'd1: current_cell_data = game_board[3:2];
-            4'd2: current_cell_data = game_board[5:4];
-            4'd3: current_cell_data = game_board[7:6];
-            4'd4: current_cell_data = game_board[9:8];
-            4'd5: current_cell_data = game_board[11:10];
-            4'd6: current_cell_data = game_board[13:12];
-            4'd7: current_cell_data = game_board[15:14];
-            4'd8: current_cell_data = game_board[17:16];
-            default: current_cell_data = 2'b00;
-        endcase
-    end
-    
-    wire space_valid = space && (current_cell_data == 2'b00);
+    // 현재 셀이 비어있는지 확인 (단순화)
+    wire space_valid = space && !game_board[current_cell];
     wire enter_valid = enter;
 
     // 게임 보드를 VGA 출력에 직접 연결
@@ -59,7 +42,7 @@ module ttt_ctrl (
             current_cell <= 4'd0;
             cell_select_flag <= 9'b000000001;
             win_flag <= 1'b0;
-            game_board <= 18'b0;
+            game_board <= 9'b0;
         end else begin
             state <= next_state;
             win_flag <= 1'b0;
@@ -87,20 +70,8 @@ module ttt_ctrl (
                     // 입력 준비 상태 - 엔터 대기
                 end
                 S_PLACE_PIECE: begin
-                    // 말 놓기
-                    case (current_cell)
-                        4'd0: game_board[1:0] <= PLAYER_CIRCLE;
-                        4'd1: game_board[3:2] <= PLAYER_CIRCLE;
-                        4'd2: game_board[5:4] <= PLAYER_CIRCLE;
-                        4'd3: game_board[7:6] <= PLAYER_CIRCLE;
-                        4'd4: game_board[9:8] <= PLAYER_CIRCLE;
-                        4'd5: game_board[11:10] <= PLAYER_CIRCLE;
-                        4'd6: game_board[13:12] <= PLAYER_CIRCLE;
-                        4'd7: game_board[15:14] <= PLAYER_CIRCLE;
-                        4'd8: game_board[17:16] <= PLAYER_CIRCLE;
-                    endcase
-                    
-                    // 단순히 원 배치만 하고 승리 조건 제거 (circle_image.coe만 표시)
+                    // 원 배치 (해당 셀 비트를 1로 설정)
+                    game_board[current_cell] <= 1'b1;
                 end
                 default: begin
                 end

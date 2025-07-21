@@ -17,7 +17,7 @@ module ttt_top (
     wire win_flag;
     wire [3:0] current_cell;
     wire [8:0] cell_select_flag;
-    wire [17:0] board_state;
+    wire [8:0] board_state;
     wire clk25;
 
     // Clock generation for game logic (25MHz)
@@ -64,7 +64,7 @@ module ttt_top (
 
     // VGA display system (integrated)
     vga_top u_vga (
-        .clk_in(clk_in),
+        .clk25(clk25),
         .reset(reset),
         .sw(board_state),
         .cell_select_flag(cell_select_flag),

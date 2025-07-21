@@ -12,13 +12,13 @@ module vga_sync(
     localparam H_FRONT   = 16;                
     localparam H_SYNC    = 96;              
     localparam H_BACK    = 48;              
-    localparam H_TOTAL   = H_VISIBLE + H_SYNC + H_BACK;
+    localparam H_TOTAL   = H_VISIBLE + H_FRONT + H_SYNC + H_BACK - 1;
 
     localparam V_VISIBLE = 480;     
     localparam V_FRONT   = 10;                
     localparam V_SYNC    = 2;                
     localparam V_BACK    = 33;               
-    localparam V_TOTAL   =V_VISIBLE + V_SYNC + V_BACK;  
+    localparam V_TOTAL   = V_VISIBLE + V_FRONT + V_SYNC + V_BACK - 1;  
 
 
 

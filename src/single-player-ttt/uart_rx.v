@@ -1,4 +1,24 @@
-module uart_rx (
+////////////////////////////////////////////////////////////////////////////////
+//
+// UART RX module - Reference-based implementation
+// Adapted for Nexys A7 tic-tac-toe project
+//
+////////////////////////////////////////////////////////////////////////////////
+
+`default_nettype none
+
+`define	RXUL_BIT_ZERO		4'h0
+`define	RXUL_BIT_ONE		4'h1
+`define	RXUL_BIT_TWO		4'h2
+`define	RXUL_BIT_THREE		4'h3
+`define	RXUL_BIT_FOUR		4'h4
+`define	RXUL_BIT_FIVE		4'h5
+`define	RXUL_BIT_SIX		4'h6
+`define	RXUL_BIT_SEVEN		4'h7
+`define	RXUL_STOP		4'h8
+`define	RXUL_IDLE		4'hf
+
+module uart_rx(
     input  wire       clk,
     input  wire       reset,
     input  wire       rx_in,
@@ -6,66 +26,96 @@ module uart_rx (
     output reg        data_valid
 );
 
-    localparam 
-        IDLE  = 3'd0,
-        START = 3'd1,
-        DATA  = 3'd2,
-        STOP  = 3'd3;
+parameter [23:0] CLOCKS_PER_BAUD = 24'd2604; // 25MHz / 9600
 
-    reg [2:0] state;
-    reg [2:0] bit_cnt;
-    reg [7:0] shift_reg;
-    wire baud_tick;
+wire	[23:0]	half_baud;
+reg	[3:0]	state;
 
-    // Baud rate generator instance for RX (16x oversampling)
-    baud_rate_gen_rx u_baud_gen_rx (
-        .clk(clk),
-        .reset(reset),
-        .baud_tick(baud_tick)
-    );
+assign	half_baud = { 1'b0, CLOCKS_PER_BAUD[23:1] } - 24'h1;
+reg	[23:0]	baud_counter;
+reg		zero_baud_counter;
 
-    // UART RX state machine
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            state      <= IDLE;
-            bit_cnt    <= 3'd0;
-            shift_reg  <= 8'd0;
-            data_out   <= 8'd0;
-            data_valid <= 1'b0;
+// Register input to avoid metastability
+reg	q_uart, qq_uart, ck_uart;
+initial	q_uart  = 1'b0;
+initial	qq_uart = 1'b0;
+initial	ck_uart = 1'b0;
+always @(posedge clk)
+begin
+    q_uart <= rx_in;
+    qq_uart <= q_uart;
+    ck_uart <= qq_uart;
+end
+
+// Track clocks since last change
+reg	[23:0]	chg_counter;
+initial	chg_counter = 24'h00;
+always @(posedge clk)
+    if (qq_uart != ck_uart)
+        chg_counter <= 24'h00;
+    else
+        chg_counter <= chg_counter + 1;
+
+// Check if we are in middle of start bit
+reg	half_baud_time;
+initial	half_baud_time = 0;
+always @(posedge clk)
+    half_baud_time <= (~ck_uart)&&(chg_counter >= half_baud);
+
+initial	state = `RXUL_IDLE;
+initial	data_valid = 1'b0;
+initial	data_out = 8'h00;
+
+// Baud counter
+initial	baud_counter = 24'h00;
+always @(posedge clk)
+    if (reset)
+        baud_counter <= 24'h00;
+    else if (zero_baud_counter)
+        baud_counter <= CLOCKS_PER_BAUD - 24'h01;
+    else
+        baud_counter <= baud_counter - 24'h01;
+
+always @(posedge clk)
+    zero_baud_counter <= (baud_counter == 24'h01);
+
+// Main state machine
+always @(posedge clk)
+begin
+    if (reset) begin
+        state <= `RXUL_IDLE;
+    end else begin
+        if (state == `RXUL_IDLE)
+        begin
+            state <= `RXUL_IDLE;
+            if ((~ck_uart)&&(half_baud_time))
+                state <= `RXUL_BIT_ZERO;
+        end else if (zero_baud_counter)
+        begin
+            if (state < `RXUL_STOP)
+                state <= state + 1;
+            else
+                state <= `RXUL_IDLE;
         end
-        else begin
-            data_valid <= 1'b0;
-            
-            if (baud_tick) begin
-                case (state)
-                    IDLE: begin
-                        if (rx_in == 1'b0)
-                            state <= START;
-                    end
-                    
-                    START: begin
-                        state   <= DATA;
-                        bit_cnt <= 3'd0;
-                    end
-                    
-                    DATA: begin
-                        shift_reg[bit_cnt] <= rx_in;
-                        if (bit_cnt == 3'd7)
-                            state <= STOP;
-                        else
-                            bit_cnt <= bit_cnt + 1;
-                    end
-                    
-                    STOP: begin
-                        data_out   <= shift_reg;
-                        data_valid <= 1'b1;
-                        state      <= IDLE;
-                    end
-                    
-                    default: state <= IDLE;
-                endcase
-            end
-        end
+    end
+end
+
+// Data bit capture logic
+reg	[7:0]	data_reg;
+always @(posedge clk)
+    if (zero_baud_counter)
+        data_reg <= { ck_uart, data_reg[7:1] };
+
+// Output data logic
+always @(posedge clk)
+    if (reset) begin
+        data_valid <= 1'b0;
+        data_out <= 8'h00;
+    end else if ((zero_baud_counter)&&(state == `RXUL_STOP)) begin
+        data_valid <= 1'b1;
+        data_out <= data_reg;
+    end else begin
+        data_valid <= 1'b0;
     end
 
 endmodule
