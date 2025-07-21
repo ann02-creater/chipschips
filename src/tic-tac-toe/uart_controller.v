@@ -8,9 +8,10 @@ module uart_controller (
     output wire       left,
     output wire       right,
     output wire       enter,
+    output wire       space,
     input  wire       win_flag,
-    input  wire [1:0] row,
-    input  wire [1:0] col
+    input  wire [3:0] current_cell,
+    input  wire [8:0] cell_select_flag
 );
 
     wire [7:0] rx_data;
@@ -41,14 +42,16 @@ module uart_controller (
         .reset(reset),
         .uart_data(rx_data),
         .uart_valid(rx_valid),
-        .up_key(up_key),
-        .down_key(down_key),
-        .left_key(left_key),
-        .right_key(right_key),
-        .enter_key(enter_key)
+        .up_key(up),
+        .down_key(down),
+        .left_key(left),
+        .right_key(right),
+        .enter_key(enter),
+        .space_key(space)
     );
 
-    reg [1:0] prev_row, prev_col;
+    reg [3:0] prev_current_cell;
+    reg [8:0] prev_cell_select_flag;
     reg prev_win_flag;
     reg [31:0] status_timer;
     
@@ -56,8 +59,8 @@ module uart_controller (
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            prev_row <= 0;
-            prev_col <= 0;
+            prev_current_cell <= 0;
+            prev_cell_select_flag <= 9'b000000001;
             prev_win_flag <= 0;
             tx_send <= 0;
             tx_data <= 0;
@@ -65,20 +68,20 @@ module uart_controller (
         end else begin
             tx_send <= 0;
 
-            if ((row != prev_row || col != prev_col || win_flag != prev_win_flag) && !tx_busy) begin
+            if ((current_cell != prev_current_cell || cell_select_flag != prev_cell_select_flag || win_flag != prev_win_flag) && !tx_busy) begin
                 if (win_flag) begin
-                    tx_data <= 8'h57;
+                    tx_data <= 8'h57;  // 'W' for win
                     tx_send <= 1;
                 end else begin
-                    tx_data <= {4'h3, row} + 8'h30;
+                    tx_data <= current_cell + 8'h30;  // Send current cell position
                     tx_send <= 1;
                 end
-                prev_row <= row;
-                prev_col <= col;
+                prev_current_cell <= current_cell;
+                prev_cell_select_flag <= cell_select_flag;
                 prev_win_flag <= win_flag;
                 status_timer <= 0;
             end else if (status_timer >= STATUS_INTERVAL && !tx_busy) begin
-                tx_data <= {4'h4, col} + 8'h30;
+                tx_data <= 8'h43;  // 'C' for cursor position status
                 tx_send <= 1;
                 status_timer <= 0;
             end else begin

@@ -2,7 +2,8 @@
 module vga_top (
     input  wire       clk_in,
     input  wire       reset,
-    input  wire [8:0] sw, // Use a 9-bit switch input for 9 cells
+    input  wire [17:0] sw, // Use 18-bit input for 9 cells (2 bits each)
+    input  wire [8:0] cell_select_flag, // One-hot encoding for cursor position
     output wire       VGA_HS,
     output wire       VGA_VS,
     output wire [3:0] VGA_R,
@@ -44,6 +45,7 @@ module vga_top (
         .y        (y),
         .en       (en),
         .sw       (sw),
+        .cell_select_flag (cell_select_flag),
         .red      (VGA_R),
         .green    (VGA_G),
         .blue     (VGA_B)
