@@ -56,7 +56,7 @@ end
 
 wire mem_pixel; // Explicitly declare the wire for the memory pixel
 
-// Get cell state from 2-bit values (00:empty, 01:X, 10:O)
+// Get cell state from 2-bit values (00:empty, 01:Circle)
 reg [1:0] cell_state;
 always @(*) begin
     case (cell_index)
@@ -73,38 +73,29 @@ always @(*) begin
     endcase
 end
 
-wire is_X = (cell_state == 2'b01);
-wire is_O = (cell_state == 2'b10);
+wire is_Circle = (cell_state == 2'b01);
 wire is_empty = (cell_state == 2'b00);
 reg [15:0] bram_addr;
 
 always @(*) begin
     bram_addr = rel_y * WIDE + rel_x;
 end
-wire [11:0] o_bram_data;
-wire [11:0] x_bram_data;
+wire [11:0] circle_bram_data;
 
-// Instantiate the Block Memory Generator for the O image (circle)
-blk_mem_gen_0 u_o_image_rom (
+// Instantiate the Block Memory Generator for the Circle image
+blk_mem_gen_0 u_circle_image_rom (
     .clka(clk),
     .addra(bram_addr),
-    .douta(o_bram_data)
-);
-
-// Instantiate the Block Memory Generator for the X image  
-blk_mem_gen_0_1 u_x_image_rom (
-    .clka(clk),
-    .addra(bram_addr),
-    .douta(x_bram_data)
+    .douta(circle_bram_data)
 );
 
 
 // Select image data based on cell state
-wire [11:0] selected_image_data = is_X ? x_bram_data : o_bram_data;
+wire [11:0] selected_image_data = circle_bram_data;
 wire [11:0] corrected_color = selected_image_data;
 
 // Check if current pixel is part of the image (not background)
-assign mem_pixel = is_X ? |x_bram_data : |o_bram_data; 
+assign mem_pixel = |circle_bram_data; 
 
 // Draw borders for all cells
 wire border = (rel_x < LINE_W) || (rel_x >= WIDE - LINE_W) ||
@@ -121,8 +112,8 @@ always @(*) begin
         red   = 4'h0;
         green = 4'h0;
         blue  = 4'h0;
-    end else if ((is_X || is_O) && mem_pixel) begin
-        // Display X or O image
+    end else if (is_Circle && mem_pixel) begin
+        // Display Circle image
         red   = corrected_color[11:8];
         green = corrected_color[7:4];
         blue  = corrected_color[3:0];
