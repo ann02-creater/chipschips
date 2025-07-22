@@ -65,19 +65,26 @@ always @(posedge clk)
 initial	state = `RXUL_IDLE;
 initial	data_valid = 1'b0;
 initial	data_out = 8'h00;
-
-// Baud counter
 initial	baud_counter = 24'h00;
-always @(posedge clk)
-    if (reset)
-        baud_counter <= 24'h00;
-    else if (zero_baud_counter)
-        baud_counter <= CLOCKS_PER_BAUD - 24'h01;
-    else
-        baud_counter <= baud_counter - 24'h01;
+initial	zero_baud_counter = 1'b0;
 
+// Baud counter (only runs when not in IDLE state)
 always @(posedge clk)
-    zero_baud_counter <= (baud_counter == 24'h01);
+    if (reset) begin
+        baud_counter <= 24'h00;
+        zero_baud_counter <= 1'b0;
+    end else if (state != `RXUL_IDLE) begin
+        if (zero_baud_counter)
+            baud_counter <= CLOCKS_PER_BAUD - 24'h01;
+        else
+            baud_counter <= baud_counter - 24'h01;
+            
+        zero_baud_counter <= (baud_counter == 24'h01);
+    end else begin
+        // IDLE 상태에서는 보드레이트 카운터 정지
+        baud_counter <= CLOCKS_PER_BAUD - 24'h01;
+        zero_baud_counter <= 1'b0;
+    end
 
 // Main state machine
 always @(posedge clk)

@@ -2,7 +2,7 @@
 module vga_top (
     input  wire       clk25,          // 25MHz clock from external source
     input  wire       reset,
-    input  wire [17:0] sw, // Use 18-bit input for 9 cells (2 bits each)
+    input  wire [8:0] sw, // Use 9-bit input for 9 cells (1 bit each)
     input  wire [8:0] cell_select_flag, // One-hot encoding for cursor position
     output wire       VGA_HS,
     output wire       VGA_VS,

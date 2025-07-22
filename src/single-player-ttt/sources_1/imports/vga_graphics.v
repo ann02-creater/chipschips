@@ -70,7 +70,7 @@ always @(*) begin
         green = 4'hF;
         blue  = 4'h0;
     end else if (cursor_highlight) begin
-        // Cursor highlight - yellow border
+        // Cursor highlight - yellow border (강제 노란색)
         red   = 4'hF;
         green = 4'hF;
         blue  = 4'h0;
