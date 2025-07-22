@@ -308,11 +308,11 @@ vivado -mode batch -source run_vga_sim.tcl
 3. **상태 머신**: FSM 상태 전이 추적
 4. **버튼 디바운싱**: 입력 신호 안정성 확인
 
+[DRC NSTD-1] Unspecified I/O Standard: 18 out of 18 logical ports use I/O standard (IOSTANDARD) value 'DEFAULT', instead of a user assigned specific value. This may cause I/O contention or incompatibility with the board power or connectivity affecting performance, signal integrity or in extreme cases cause damage to the device or the components to which it is connected. To correct this violation, specify all I/O standards. This design will fail to generate a bitstream unless all logical ports have a user specified I/O standard value defined. To allow bitstream creation with unspecified I/O standard values (not recommended), use this command: set_property SEVERITY {Warning} [get_drc_checks NSTD-1].  NOTE: When using the Vivado Runs infrastructure (e.g. launch_runs Tcl command), add this command to a .tcl file and add that file as a pre-hook for write_bitstream step for the implementation run. Problem ports: VGA_B[3:0], VGA_G[3:0], VGA_R[3:0], VGA_HS, VGA_VS, clk_in, reset_n, rx_in, and tx_out.
 
-[Vivado 12-1464] The source file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci' cannot be added to the fileset 'sources_1'.
-[filemgmt 20-984] The source file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci' cannot be added to the fileset 'sources_1'.
-[IP_Flow 19-3389] Failed to import IP file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci': Could not find IP definition in IP file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci'. The IP file may be corrupt.
-[filemgmt 20-984] The source file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci' cannot be added to the fileset 'sources_1'.
+[DRC UCIO-1] Unconstrained Logical Port: 18 out of 18 logical ports have no user assigned specific location constraint (LOC). This may cause I/O contention or incompatibility with the board power or connectivity affecting performance, signal integrity or in extreme cases cause damage to the device or the components to which it is connected. To correct this violation, specify all pin locations. This design will fail to generate a bitstream unless all logical ports have a user specified site LOC constraint defined.  To allow bitstream creation with unspecified pin locations (not recommended), use this command: set_property SEVERITY {Warning} [get_drc_checks UCIO-1].  NOTE: When using the Vivado Runs infrastructure (e.g. launch_runs Tcl command), add this command to a .tcl file and add that file as a pre-hook for write_bitstream step for the implementation run.  Problem ports: VGA_B[3:0], VGA_G[3:0], VGA_R[3:0], VGA_HS, VGA_VS, clk_in, reset_n, rx_in, and tx_out.
+[Vivado 12-1345] Error(s) found during DRC. Bitgen not run.
+
 
 
 
