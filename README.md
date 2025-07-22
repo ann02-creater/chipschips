@@ -311,5 +311,8 @@ vivado -mode batch -source run_vga_sim.tcl
 
 [Vivado 12-1464] The source file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci' cannot be added to the fileset 'sources_1'.
 [filemgmt 20-984] The source file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci' cannot be added to the fileset 'sources_1'.
+[IP_Flow 19-3389] Failed to import IP file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci': Could not find IP definition in IP file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci'. The IP file may be corrupt.
+[filemgmt 20-984] The source file 'C:/Users/NTH417/Desktop/chipschips-main/src/single-player-ttt/sources_1/ip/clk_wiz_0_1/clk_wiz_0.xci' cannot be added to the fileset 'sources_1'.
+
 
 
