@@ -21,14 +21,58 @@ module ttt_ctrl (
     reg [1:0] state;
     reg [8:0] board_state;
     
-    // Edge detection for keys
+    // Clock domain synchronization (100MHz to 25MHz)
+    // First stage synchronizers
+    reg up_sync1, down_sync1, left_sync1, right_sync1;
+    reg enter_sync1, space_sync1;
+    
+    // Second stage synchronizers
+    reg up_sync2, down_sync2, left_sync2, right_sync2;
+    reg enter_sync2, space_sync2;
+    
+    // Synchronization logic
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            up_sync1    <= 1'b0;
+            down_sync1  <= 1'b0;
+            left_sync1  <= 1'b0;
+            right_sync1 <= 1'b0;
+            enter_sync1 <= 1'b0;
+            space_sync1 <= 1'b0;
+            
+            up_sync2    <= 1'b0;
+            down_sync2  <= 1'b0;
+            left_sync2  <= 1'b0;
+            right_sync2 <= 1'b0;
+            enter_sync2 <= 1'b0;
+            space_sync2 <= 1'b0;
+        end else begin
+            // First stage
+            up_sync1    <= up;
+            down_sync1  <= down;
+            left_sync1  <= left;
+            right_sync1 <= right;
+            enter_sync1 <= enter;
+            space_sync1 <= space;
+            
+            // Second stage
+            up_sync2    <= up_sync1;
+            down_sync2  <= down_sync1;
+            left_sync2  <= left_sync1;
+            right_sync2 <= right_sync1;
+            enter_sync2 <= enter_sync1;
+            space_sync2 <= space_sync1;
+        end
+    end
+    
+    // Edge detection for synchronized keys
     reg up_d, down_d, left_d, right_d, space_d, enter_d;
-    wire up_edge    = up & ~up_d;
-    wire down_edge  = down & ~down_d;
-    wire left_edge  = left & ~left_d;
-    wire right_edge = right & ~right_d;
-    wire space_edge = space & ~space_d;
-    wire enter_edge = enter & ~enter_d;
+    wire up_edge    = up_sync2 & ~up_d;
+    wire down_edge  = down_sync2 & ~down_d;
+    wire left_edge  = left_sync2 & ~left_d;
+    wire right_edge = right_sync2 & ~right_d;
+    wire space_edge = space_sync2 & ~space_d;
+    wire enter_edge = enter_sync2 & ~enter_d;
     
     always @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -39,12 +83,12 @@ module ttt_ctrl (
             space_d <= 1'b0;
             enter_d <= 1'b0;
         end else begin
-            up_d    <= up;
-            down_d  <= down;
-            left_d  <= left;
-            right_d <= right;
-            space_d <= space;
-            enter_d <= enter;
+            up_d    <= up_sync2;
+            down_d  <= down_sync2;
+            left_d  <= left_sync2;
+            right_d <= right_sync2;
+            space_d <= space_sync2;
+            enter_d <= enter_sync2;
         end
     end
 
@@ -90,6 +134,10 @@ module ttt_ctrl (
                     // Wait for enter
                     if (enter_edge) begin
                         state <= S_PLACE;
+                    end
+                    // Allow cancellation by pressing space again
+                    else if (space_edge) begin
+                        state <= S_MOVE;
                     end
                 end
                 

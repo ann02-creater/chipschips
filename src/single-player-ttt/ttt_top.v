@@ -1,6 +1,6 @@
 module ttt_top (
     input  wire       clk_in,
-    input  wire       reset,
+    input  wire       reset_n,  // Active-low reset (CPU_RESETN button)
     input  wire       rx_in,
     output wire       tx_out,
     output wire       VGA_HS,
@@ -10,7 +10,8 @@ module ttt_top (
     output wire [3:0] VGA_B
 );
 
-    // Clock generation (moved to vga_top)
+    // Internal reset signal (active-high)
+    wire reset = ~reset_n;
 
     // Internal signals  
     wire up, down, left, right, enter, space;
