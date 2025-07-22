@@ -6,165 +6,75 @@ module ttt_ctrl (
     input  wire        left,
     input  wire        right,
     input  wire        enter,
-    input  wire        space,
     output reg         win_flag,
-    output reg [3:0]   current_cell,
-    output reg [8:0]   cell_select_flag,
-    output reg [17:0]  board_out  // VGA 연결용 (2비트 x 9개 셀)
+    output reg [1:0]   row,
+    output reg [1:0]   col,
+    output reg [8:0]   board_out  // VGA 연결용 추가
 );
 
     localparam
-        S_CURSOR_MOVE = 2'd0,
-        S_INPUT_READY = 2'd1,
-        S_PLACE_PIECE = 2'd2,
-        S_DISPLAY_WIN = 2'd3;
-
-    // 플레이어 정의: 01 = X (Player 1), 10 = O (Player 2)
-    localparam
-        PLAYER_X = 2'b01,
-        PLAYER_O = 2'b10;
+        S_CURSOR      = 2'd0,
+        S_PLACE_O     = 2'd1,
+        S_DISPLAY_WIN = 2'd2;
 
     reg [1:0] state, next_state;
-    reg [17:0] game_board;
-    reg [1:0] current_player;
-    integer i;
+    reg [1:0] board [0:2][0:2];
+    integer i, j;
 
-    reg [1:0] current_cell_data;
-    
-    // 현재 셀 데이터 추출
-    always @(*) begin
-        case (current_cell)
-            4'd0: current_cell_data = game_board[1:0];
-            4'd1: current_cell_data = game_board[3:2];
-            4'd2: current_cell_data = game_board[5:4];
-            4'd3: current_cell_data = game_board[7:6];
-            4'd4: current_cell_data = game_board[9:8];
-            4'd5: current_cell_data = game_board[11:10];
-            4'd6: current_cell_data = game_board[13:12];
-            4'd7: current_cell_data = game_board[15:14];
-            4'd8: current_cell_data = game_board[17:16];
-            default: current_cell_data = 2'b00;
-        endcase
-    end
-    
-    wire space_valid = space && (current_cell_data == 2'b00);
-    wire enter_valid = enter;
+    wire en_valid = enter && (board[row][col] == 2'b00);
 
-    // 게임 보드를 VGA 출력에 직접 연결
+    // board 배열을 VGA용 1차원 배열로 변환
     always @(*) begin
-        board_out = game_board;
+        board_out[0] = (board[0][0] != 2'b00);
+        board_out[1] = (board[0][1] != 2'b00);
+        board_out[2] = (board[0][2] != 2'b00);
+        board_out[3] = (board[1][0] != 2'b00);
+        board_out[4] = (board[1][1] != 2'b00);
+        board_out[5] = (board[1][2] != 2'b00);
+        board_out[6] = (board[2][0] != 2'b00);
+        board_out[7] = (board[2][1] != 2'b00);
+        board_out[8] = (board[2][2] != 2'b00);
     end
 
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            state <= S_CURSOR_MOVE;
-            current_cell <= 4'd0;
-            cell_select_flag <= 9'b000000001;
+            state    <= S_CURSOR;
+            row      <= 2'd0;
+            col      <= 2'd0;
             win_flag <= 1'b0;
-            current_player <= PLAYER_X;
-            game_board <= 18'b0;
+            for (i = 0; i < 3; i = i + 1)
+                for (j = 0; j < 3; j = j + 1)
+                    board[i][j] <= 2'b00;
         end else begin
-            state <= next_state;
+            state    <= next_state;
             win_flag <= 1'b0;
             case (state)
-                S_CURSOR_MOVE: begin
-                    // WASD 키로 0~8번 셀 이동
-                    if (up && current_cell >= 3) begin
-                        current_cell <= current_cell - 3;
-                        cell_select_flag <= cell_select_flag >> 3;
-                    end
-                    if (down && current_cell <= 5) begin
-                        current_cell <= current_cell + 3;
-                        cell_select_flag <= cell_select_flag << 3;
-                    end
-                    if (left && (current_cell % 3) != 0) begin
-                        current_cell <= current_cell - 1;
-                        cell_select_flag <= cell_select_flag >> 1;
-                    end
-                    if (right && (current_cell % 3) != 2) begin
-                        current_cell <= current_cell + 1;
-                        cell_select_flag <= cell_select_flag << 1;
-                    end
+                S_CURSOR: begin
+                    if (up    && row > 0) row <= row - 1;
+                    if (down  && row < 2) row <= row + 1;
+                    if (left  && col > 0) col <= col - 1;
+                    if (right && col < 2) col <= col + 1;
                 end
-                S_INPUT_READY: begin
-                    // 입력 준비 상태 - 엔터 대기
-                end
-                S_PLACE_PIECE: begin
-                    // 말 놓기
-                    case (current_cell)
-                        4'd0: game_board[1:0] <= current_player;
-                        4'd1: game_board[3:2] <= current_player;
-                        4'd2: game_board[5:4] <= current_player;
-                        4'd3: game_board[7:6] <= current_player;
-                        4'd4: game_board[9:8] <= current_player;
-                        4'd5: game_board[11:10] <= current_player;
-                        4'd6: game_board[13:12] <= current_player;
-                        4'd7: game_board[15:14] <= current_player;
-                        4'd8: game_board[17:16] <= current_player;
-                    endcase
-                    current_player <= (current_player == PLAYER_X) ? PLAYER_O : PLAYER_X;
-                    
-                    // 승리 조건 검사
-                    case (current_cell)
-                        // Row 0
-                        0, 1, 2: begin
-                            if (game_board[1:0] == current_player && 
-                                game_board[3:2] == current_player && 
-                                game_board[5:4] == current_player)
-                                win_flag <= 1'b1;
-                        end
-                        // Row 1  
-                        3, 4, 5: begin
-                            if (game_board[7:6] == current_player && 
-                                game_board[9:8] == current_player && 
-                                game_board[11:10] == current_player)
-                                win_flag <= 1'b1;
-                        end
-                        // Row 2
-                        6, 7, 8: begin
-                            if (game_board[13:12] == current_player && 
-                                game_board[15:14] == current_player && 
-                                game_board[17:16] == current_player)
-                                win_flag <= 1'b1;
-                        end
-                    endcase
-                    
-                    // Column checks
-                    case (current_cell % 3)
-                        0: begin // Left column
-                            if (game_board[1:0] == current_player && 
-                                game_board[7:6] == current_player && 
-                                game_board[13:12] == current_player)
-                                win_flag <= 1'b1;
-                        end
-                        1: begin // Middle column
-                            if (game_board[3:2] == current_player && 
-                                game_board[9:8] == current_player && 
-                                game_board[15:14] == current_player)
-                                win_flag <= 1'b1;
-                        end
-                        2: begin // Right column
-                            if (game_board[5:4] == current_player && 
-                                game_board[11:10] == current_player && 
-                                game_board[17:16] == current_player)
-                                win_flag <= 1'b1;
-                        end
-                    endcase
-                    
-                    // Diagonal checks
-                    if (current_cell == 0 || current_cell == 4 || current_cell == 8) begin
-                        if (game_board[1:0] == current_player && 
-                            game_board[9:8] == current_player && 
-                            game_board[17:16] == current_player)
-                            win_flag <= 1'b1;
-                    end
-                    
-                    if (current_cell == 2 || current_cell == 4 || current_cell == 6) begin
-                        if (game_board[5:4] == current_player && 
-                            game_board[9:8] == current_player && 
-                            game_board[13:12] == current_player)
-                            win_flag <= 1'b1;
-                    end
+                S_PLACE_O: begin
+                    board[row][col] <= 2'b10;
+                    if (board[row][0] == 2'b10 &&
+                        board[row][1] == 2'b10 &&
+                        board[row][2] == 2'b10)
+                        win_flag <= 1'b1;
+                    else if (board[0][col] == 2'b10 &&
+                             board[1][col] == 2'b10 &&
+                             board[2][col] == 2'b10)
+                        win_flag <= 1'b1;
+                    else if (row == col &&
+                             board[0][0] == 2'b10 &&
+                             board[1][1] == 2'b10 &&
+                             board[2][2] == 2'b10)
+                        win_flag <= 1'b1;
+                    else if (row + col == 2 &&
+                             board[0][2] == 2'b10 &&
+                             board[1][1] == 2'b10 &&
+                             board[2][0] == 2'b10)
+                        win_flag <= 1'b1;
                 end
                 S_DISPLAY_WIN: begin
                 end
@@ -176,16 +86,14 @@ module ttt_ctrl (
 
     always @(*) begin
         case (state)
-            S_CURSOR_MOVE:
-                next_state = space_valid ? S_INPUT_READY : S_CURSOR_MOVE;
-            S_INPUT_READY:
-                next_state = enter_valid ? S_PLACE_PIECE : S_INPUT_READY;
-            S_PLACE_PIECE:
-                next_state = win_flag ? S_DISPLAY_WIN : S_CURSOR_MOVE;
+            S_CURSOR:
+                next_state = en_valid ? S_PLACE_O : S_CURSOR;
+            S_PLACE_O:
+                next_state = win_flag ? S_DISPLAY_WIN : S_CURSOR;
             S_DISPLAY_WIN:
                 next_state = S_DISPLAY_WIN;
             default:
-                next_state = S_CURSOR_MOVE;
+                next_state = S_CURSOR;
         endcase
     end
 

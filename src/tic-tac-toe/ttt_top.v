@@ -10,22 +10,47 @@ module ttt_top (
     output wire [3:0] VGA_B
 );
 
-    // Clock generation (moved to vga_top)
-
-    // Internal signals  
-    wire up, down, left, right, enter, space;
-    wire win_flag;
-    wire [3:0] current_cell;
-    wire [8:0] cell_select_flag;
-    wire [17:0] board_state;
+    // Clock generation
     wire clk25;
-
-    // Clock generation for game logic (25MHz)
+    wire locked;
+    
     clk_wiz_0 u_clk25 (
         .clk_in(clk_in),
         .reset(reset),
         .clk25(clk25),
-        .locked()
+        .locked(locked)
+    );
+
+    // Internal signals
+    wire [7:0] rx_data;
+    wire rx_valid;
+    wire up, down, left, right, enter;
+    wire win_flag;
+    wire [1:0] row, col;
+    wire [8:0] board_state;
+    wire [9:0] x, y;
+    wire en;
+
+    // UART RX
+    uart_rx u_rx (
+        .clk(clk25),
+        .reset(reset),
+        .rx_in(rx_in),
+        .data_out(rx_data),
+        .data_valid(rx_valid)
+    );
+
+    // Key decoder
+    key_decoder u_decoder (
+        .clk(clk25),
+        .reset(reset),
+        .uart_data(rx_data),
+        .uart_valid(rx_valid),
+        .up_key(up),
+        .down_key(down),
+        .left_key(left),
+        .right_key(right),
+        .enter_key(enter)
     );
 
     // Game controller
@@ -37,14 +62,13 @@ module ttt_top (
         .left(left),
         .right(right),
         .enter(enter),
-        .space(space),
         .win_flag(win_flag),
-        .current_cell(current_cell),
-        .cell_select_flag(cell_select_flag),
+        .row(row),
+        .col(col),
         .board_out(board_state)
     );
 
-    // UART Controller with integrated key decoder
+    // Status reporter (UART TX)
     uart_controller u_uart_ctrl (
         .clk(clk25),
         .reset(reset),
@@ -55,24 +79,33 @@ module ttt_top (
         .left(left),
         .right(right),
         .enter(enter),
-        .space(space),
         .win_flag(win_flag),
-        .current_cell(current_cell),
-        .cell_select_flag(cell_select_flag)
+        .row(row),
+        .col(col)
     );
 
-
-    // VGA display system (integrated)
-    vga_top u_vga (
-        .clk_in(clk_in),
+    // VGA sync
+    vga_sync u_sync (
+        .clk(clk25),
         .reset(reset),
+        .x(x),
+        .y(y),
+        .hsync(VGA_HS),
+        .vsync(VGA_VS),
+        .en(en)
+    );
+
+    // VGA graphics
+    vga_graphics u_grp (
+        .clk(clk25),
+        .reset(reset),
+        .x(x),
+        .y(y),
+        .en(en),
         .sw(board_state),
-        .cell_select_flag(cell_select_flag),
-        .VGA_HS(VGA_HS),
-        .VGA_VS(VGA_VS),
-        .VGA_R(VGA_R),
-        .VGA_G(VGA_G),
-        .VGA_B(VGA_B)
+        .red(VGA_R),
+        .green(VGA_G),
+        .blue(VGA_B)
     );
 
 endmodule
