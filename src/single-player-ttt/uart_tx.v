@@ -27,7 +27,7 @@ module uart_tx(
     output wire       busy
 );
 
-parameter [23:0] CLOCKS_PER_BAUD = 24'd2604; // 25MHz / 9600
+parameter [23:0] CLOCKS_PER_BAUD = 24'd10417; // 100MHz / 9600
 
 reg	[23:0]	baud_counter;
 reg	[3:0]	state;

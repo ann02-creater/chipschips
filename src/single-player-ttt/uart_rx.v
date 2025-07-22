@@ -26,7 +26,7 @@ module uart_rx(
     output reg        data_valid
 );
 
-parameter [23:0] CLOCKS_PER_BAUD = 24'd2604; // 25MHz / 9600
+parameter [23:0] CLOCKS_PER_BAUD = 24'd10417; // 100MHz / 9600
 
 wire	[23:0]	half_baud;
 reg	[3:0]	state;

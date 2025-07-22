@@ -46,7 +46,7 @@ module ttt_top (
 
     // UART Controller with integrated key decoder
     uart_controller u_uart_ctrl (
-        .clk(clk25),
+        .clk(clk_in),  // Use 100MHz clock for UART
         .reset(reset),
         .rx_in(rx_in),
         .tx_out(tx_out),

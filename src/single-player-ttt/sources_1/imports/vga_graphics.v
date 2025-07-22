@@ -4,86 +4,85 @@ module vga_graphics(
     input  wire [9:0] x,
     input  wire [9:0] y,
     input  wire       en,
-    input  wire [8:0] sw, // 9-bit input for 9 cells 
-    input  wire [8:0] cell_select_flag, // One-hot encoding for cursor position
+    input  wire [8:0] sw,
+    input  wire [8:0] cell_select_flag,
     output reg  [3:0] red,
     output reg  [3:0] green,
     output reg  [3:0] blue
 );
 
-// Cell dimensions (640/3, 480/3)
+// Cell dimensions
 localparam WIDE = 213;
 localparam HIGH = 160;
 localparam LINE_W = 3;
+localparam HIGHLIGHT_W = 6;
 
-// Calculate relative coordinates within a cell using wire (like reference)
-wire [9:0] rel_x = (x < WIDE) ? x : 
-                   (x < 2*WIDE) ? x - WIDE : 
-                   x - 2*WIDE;
-wire [9:0] rel_y = (y < HIGH) ? y : 
-                   (y < 2*HIGH) ? y - HIGH : 
-                   y - 2*HIGH;
+// Cell position calculation
+wire [9:0] cell_x_pos = (x < WIDE) ? 10'd0 : (x < 2*WIDE) ? 10'd1 : 10'd2;
+wire [9:0] cell_y_pos = (y < HIGH) ? 10'd0 : (y < 2*HIGH) ? 10'd1 : 10'd2;
+wire [3:0] cell_index = {2'b00, cell_y_pos[1:0]} * 3 + {2'b00, cell_x_pos[1:0]};
 
-// Calculate which cell the current (x,y) is in
-wire [1:0] cell_x = (x < WIDE) ? 2'd0 : (x < 2*WIDE) ? 2'd1 : 2'd2;
-wire [1:0] cell_y = (y < HIGH) ? 2'd0 : (y < 2*HIGH) ? 2'd1 : 2'd2;
+// Relative position within cell
+wire [9:0] rel_x = x - (cell_x_pos * WIDE);
+wire [9:0] rel_y = y - (cell_y_pos * HIGH);
 
-// Calculate cell index (0-8) from 3x3 grid position
-wire [3:0] cell_index = cell_y * 3 + cell_x;
-
-
-// Check if the current cell should show a circle (simplified like reference)
-wire active_cell = (cell_index < 9) ? sw[cell_index] : 1'b0;
-
-// Calculate BRAM address using wire
+// Memory address calculation
 wire [15:0] bram_addr = rel_y * WIDE + rel_x;
 wire [11:0] bram_data;
 
-// Instantiate the Block Memory Generator for the Circle image
-blk_mem_gen_0 u_circle_image_rom (
+// Block RAM for circle image
+blk_mem_gen_0 u_circle_rom (
     .clka(clk),
     .addra(bram_addr),
     .douta(bram_data)
 );
 
-// Check if current pixel is part of the image (not background)
-wire mem_pixel = |bram_data; 
+// Pixel detection
+wire is_circle_pixel = |bram_data;
+wire is_active_cell = (cell_index < 9) ? sw[cell_index] : 1'b0;
+wire is_selected_cell = (cell_index < 9) ? cell_select_flag[cell_index] : 1'b0;
 
-// Draw borders for all cells
-wire border = (rel_x < LINE_W) || (rel_x >= WIDE - LINE_W) ||
-              (rel_y < LINE_W) || (rel_y >= HIGH - LINE_W);
+// Border detection
+wire is_border = (rel_x < LINE_W) || (rel_x >= WIDE - LINE_W) ||
+                 (rel_y < LINE_W) || (rel_y >= HIGH - LINE_W);
 
-// Check if current cell is selected (cursor highlight)
-wire cell_selected = cell_select_flag[cell_index];
-wire cursor_highlight = cell_selected && ((rel_x < LINE_W*2) || (rel_x >= WIDE - LINE_W*2) ||
-                                         (rel_y < LINE_W*2) || (rel_y >= HIGH - LINE_W*2));
+wire is_highlight = is_selected_cell && 
+                    ((rel_x < HIGHLIGHT_W) || (rel_x >= WIDE - HIGHLIGHT_W) ||
+                     (rel_y < HIGHLIGHT_W) || (rel_y >= HIGH - HIGHLIGHT_W));
 
-always @(*) begin
-    if (!en) begin
-        // Off-screen area is black
-        red   = 4'h0;
-        green = 4'h0;
-        blue  = 4'h0;
-    end else if (active_cell && mem_pixel) begin
-        // Display green circle (fixed color)
-        red   = 4'h0;
-        green = 4'hF;
-        blue  = 4'h0;
-    end else if (cursor_highlight) begin
-        // Cursor highlight - yellow border (강제 노란색)
-        red   = 4'hF;
-        green = 4'hF;
-        blue  = 4'h0;
-    end else if (border) begin
-        // Cell borders are black
-        red   = 4'h0;
-        green = 4'h0;
-        blue  = 4'h0;
+// Color output logic
+always @(posedge clk or posedge reset) begin
+    if (reset) begin
+        red   <= 4'h0;
+        green <= 4'h0;
+        blue  <= 4'h0;
     end else begin
-        // Cell background is white
-        red   = 4'hF;
-        green = 4'hF;
-        blue  = 4'hF;
+        if (!en) begin
+            // Off-screen: black
+            red   <= 4'h0;
+            green <= 4'h0;
+            blue  <= 4'h0;
+        end else if (is_active_cell && is_circle_pixel) begin
+            // Green circle
+            red   <= 4'h0;
+            green <= 4'hF;
+            blue  <= 4'h0;
+        end else if (is_highlight) begin
+            // Red highlight border
+            red   <= 4'hF;
+            green <= 4'h0;
+            blue  <= 4'h0;
+        end else if (is_border) begin
+            // Black border
+            red   <= 4'h0;
+            green <= 4'h0;
+            blue  <= 4'h0;
+        end else begin
+            // White background
+            red   <= 4'hF;
+            green <= 4'hF;
+            blue  <= 4'hF;
+        end
     end
 end
 

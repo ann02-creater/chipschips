@@ -10,86 +10,103 @@ module ttt_ctrl (
     output reg         win_flag,
     output reg [3:0]   current_cell,
     output reg [8:0]   cell_select_flag,
-    output reg [8:0]   board_out  // VGA 연결용 (9비트, 각 셀 on/off)
+    output reg [8:0]   board_out
 );
 
-    localparam
-        S_CURSOR_MOVE = 2'd0,
-        S_INPUT_READY = 2'd1,
-        S_PLACE_PIECE = 2'd2;
+    // State definitions
+    localparam S_MOVE  = 2'b00;
+    localparam S_WAIT  = 2'b01;
+    localparam S_PLACE = 2'b10;
 
-    // 단일 플레이어 정의: 01 = Circle (Player 1만 사용)
-    localparam
-        PLAYER_CIRCLE = 2'b01,
-        EMPTY = 2'b00;
-
-    reg [1:0] state, next_state;
-    reg [8:0] game_board;  // 9비트로 변경 (각 셀 on/off)
-    integer i;
-
-    // 현재 셀이 비어있는지 확인 (단순화)
-    wire space_valid = space && !game_board[current_cell];
-    wire enter_valid = enter;
-
-    // 게임 보드를 VGA 출력에 직접 연결
-    always @(*) begin
-        board_out = game_board;
-    end
-
+    reg [1:0] state;
+    reg [8:0] board_state;
+    
+    // Edge detection for keys
+    reg up_d, down_d, left_d, right_d, space_d, enter_d;
+    wire up_edge    = up & ~up_d;
+    wire down_edge  = down & ~down_d;
+    wire left_edge  = left & ~left_d;
+    wire right_edge = right & ~right_d;
+    wire space_edge = space & ~space_d;
+    wire enter_edge = enter & ~enter_d;
+    
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            state <= S_CURSOR_MOVE;
-            current_cell <= 4'd0;
-            cell_select_flag <= 9'b000000001;
-            win_flag <= 1'b0;
-            game_board <= 9'b0;
+            up_d    <= 1'b0;
+            down_d  <= 1'b0;
+            left_d  <= 1'b0;
+            right_d <= 1'b0;
+            space_d <= 1'b0;
+            enter_d <= 1'b0;
         end else begin
-            state <= next_state;
+            up_d    <= up;
+            down_d  <= down;
+            left_d  <= left;
+            right_d <= right;
+            space_d <= space;
+            enter_d <= enter;
+        end
+    end
+
+    // Cell movement logic
+    wire [3:0] next_cell_up    = (current_cell >= 3) ? current_cell - 3 : current_cell;
+    wire [3:0] next_cell_down  = (current_cell <= 5) ? current_cell + 3 : current_cell;
+    wire [3:0] next_cell_left  = (current_cell % 3 != 0) ? current_cell - 1 : current_cell;
+    wire [3:0] next_cell_right = (current_cell % 3 != 2) ? current_cell + 1 : current_cell;
+
+    // Main state machine
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            state <= S_MOVE;
+            current_cell <= 4'b0;
+            cell_select_flag <= 9'b000000001;
+            board_state <= 9'b0;
             win_flag <= 1'b0;
+        end else begin
             case (state)
-                S_CURSOR_MOVE: begin
-                    // WASD 키로 0~8번 셀 이동
-                    if (up && current_cell >= 3) begin
-                        current_cell <= current_cell - 3;
+                S_MOVE: begin
+                    // Handle movement
+                    if (up_edge && current_cell >= 3) begin
+                        current_cell <= next_cell_up;
                         cell_select_flag <= cell_select_flag >> 3;
-                    end
-                    if (down && current_cell <= 5) begin
-                        current_cell <= current_cell + 3;
+                    end else if (down_edge && current_cell <= 5) begin
+                        current_cell <= next_cell_down;
                         cell_select_flag <= cell_select_flag << 3;
-                    end
-                    if (left && (current_cell % 3) != 0) begin
-                        current_cell <= current_cell - 1;
+                    end else if (left_edge && current_cell % 3 != 0) begin
+                        current_cell <= next_cell_left;
                         cell_select_flag <= cell_select_flag >> 1;
-                    end
-                    if (right && (current_cell % 3) != 2) begin
-                        current_cell <= current_cell + 1;
+                    end else if (right_edge && current_cell % 3 != 2) begin
+                        current_cell <= next_cell_right;
                         cell_select_flag <= cell_select_flag << 1;
                     end
+                    
+                    // Check for space press on empty cell
+                    if (space_edge && !board_state[current_cell]) begin
+                        state <= S_WAIT;
+                    end
                 end
-                S_INPUT_READY: begin
-                    // 입력 준비 상태 - 엔터 대기
+                
+                S_WAIT: begin
+                    // Wait for enter
+                    if (enter_edge) begin
+                        state <= S_PLACE;
+                    end
                 end
-                S_PLACE_PIECE: begin
-                    // 원 배치 (해당 셀 비트를 1로 설정)
-                    game_board[current_cell] <= 1'b1;
+                
+                S_PLACE: begin
+                    // Place piece and return to move state
+                    board_state[current_cell] <= 1'b1;
+                    state <= S_MOVE;
                 end
-                default: begin
-                end
+                
+                default: state <= S_MOVE;
             endcase
         end
     end
 
+    // Output assignment
     always @(*) begin
-        case (state)
-            S_CURSOR_MOVE:
-                next_state = space_valid ? S_INPUT_READY : S_CURSOR_MOVE;
-            S_INPUT_READY:
-                next_state = enter_valid ? S_PLACE_PIECE : S_INPUT_READY;
-            S_PLACE_PIECE:
-                next_state = S_CURSOR_MOVE;
-            default:
-                next_state = S_CURSOR_MOVE;
-        endcase
+        board_out = board_state;
     end
 
 endmodule

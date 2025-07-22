@@ -11,119 +11,57 @@ module key_decoder (
     output reg        space_key
 );
 
+    // ASCII key definitions
     localparam 
         KEY_W      = 8'h77,  // 'w' - up
         KEY_S      = 8'h73,  // 's' - down  
         KEY_A      = 8'h61,  // 'a' - left
         KEY_D      = 8'h64,  // 'd' - right
-        KEY_SPACE  = 8'h20,  // space - enter
-        KEY_ENTER  = 8'h0D;  // enter - enter
+        KEY_SPACE  = 8'h20,  // space
+        KEY_ENTER  = 8'h0D;  // enter
 
-    // Key index parameters
-    localparam 
-        UP_IDX     = 0,
-        DOWN_IDX   = 1,
-        LEFT_IDX   = 2,
-        RIGHT_IDX  = 3,
-        ENTER_IDX  = 4,
-        SPACE_IDX  = 5;
-
-    reg [15:0] key_hold_counter [5:0];
-    reg [5:0] key_pressed;
+    // Single cycle pulse generation
+    reg uart_valid_d;
+    wire uart_valid_pulse;
     
-    localparam KEY_HOLD_TIME = 16'd5000;
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            uart_valid_d <= 1'b0;
+        else
+            uart_valid_d <= uart_valid;
+    end
+    
+    assign uart_valid_pulse = uart_valid & ~uart_valid_d;
 
+    // Simple key detection with single-cycle pulses
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            up_key <= 0;
-            down_key <= 0;
-            left_key <= 0;
-            right_key <= 0;
-            enter_key <= 0;
-            space_key <= 0;
-            key_pressed <= 6'b0;
-            key_hold_counter[UP_IDX] <= 0;
-            key_hold_counter[DOWN_IDX] <= 0;
-            key_hold_counter[LEFT_IDX] <= 0;
-            key_hold_counter[RIGHT_IDX] <= 0;
-            key_hold_counter[ENTER_IDX] <= 0;
-            key_hold_counter[SPACE_IDX] <= 0;
+            up_key    <= 1'b0;
+            down_key  <= 1'b0;
+            left_key  <= 1'b0;
+            right_key <= 1'b0;
+            enter_key <= 1'b0;
+            space_key <= 1'b0;
         end else begin
-            if (uart_valid) begin
+            // Clear all keys by default
+            up_key    <= 1'b0;
+            down_key  <= 1'b0;
+            left_key  <= 1'b0;
+            right_key <= 1'b0;
+            enter_key <= 1'b0;
+            space_key <= 1'b0;
+            
+            // Set key on valid pulse
+            if (uart_valid_pulse) begin
                 case (uart_data)
-                    KEY_W: begin
-                        key_pressed[UP_IDX] <= 1;
-                        key_hold_counter[UP_IDX] <= KEY_HOLD_TIME;
-                    end
-                    KEY_S: begin
-                        key_pressed[DOWN_IDX] <= 1;
-                        key_hold_counter[DOWN_IDX] <= KEY_HOLD_TIME;
-                    end
-                    KEY_A: begin
-                        key_pressed[LEFT_IDX] <= 1;
-                        key_hold_counter[LEFT_IDX] <= KEY_HOLD_TIME;
-                    end
-                    KEY_D: begin
-                        key_pressed[RIGHT_IDX] <= 1;
-                        key_hold_counter[RIGHT_IDX] <= KEY_HOLD_TIME;
-                    end
-                    KEY_SPACE: begin
-                        key_pressed[SPACE_IDX] <= 1;
-                        key_hold_counter[SPACE_IDX] <= KEY_HOLD_TIME;
-                    end
-                    KEY_ENTER: begin
-                        key_pressed[ENTER_IDX] <= 1;
-                        key_hold_counter[ENTER_IDX] <= KEY_HOLD_TIME;
-                    end
+                    KEY_W:     up_key    <= 1'b1;
+                    KEY_S:     down_key  <= 1'b1;
+                    KEY_A:     left_key  <= 1'b1;
+                    KEY_D:     right_key <= 1'b1;
+                    KEY_SPACE: space_key <= 1'b1;
+                    KEY_ENTER: enter_key <= 1'b1;
+                    default:   ; // Do nothing
                 endcase
-            end
-
-            if (key_hold_counter[UP_IDX] > 0) begin
-                key_hold_counter[UP_IDX] <= key_hold_counter[UP_IDX] - 1;
-                up_key <= 1;
-            end else begin
-                key_pressed[UP_IDX] <= 0;
-                up_key <= 0;
-            end
-
-            if (key_hold_counter[DOWN_IDX] > 0) begin
-                key_hold_counter[DOWN_IDX] <= key_hold_counter[DOWN_IDX] - 1;
-                down_key <= 1;
-            end else begin
-                key_pressed[DOWN_IDX] <= 0;
-                down_key <= 0;
-            end
-
-            if (key_hold_counter[LEFT_IDX] > 0) begin
-                key_hold_counter[LEFT_IDX] <= key_hold_counter[LEFT_IDX] - 1;
-                left_key <= 1;
-            end else begin
-                key_pressed[LEFT_IDX] <= 0;
-                left_key <= 0;
-            end
-
-            if (key_hold_counter[RIGHT_IDX] > 0) begin
-                key_hold_counter[RIGHT_IDX] <= key_hold_counter[RIGHT_IDX] - 1;
-                right_key <= 1;
-            end else begin
-                key_pressed[RIGHT_IDX] <= 0;
-                right_key <= 0;
-            end
-
-            if (key_hold_counter[ENTER_IDX] > 0) begin
-                key_hold_counter[ENTER_IDX] <= key_hold_counter[ENTER_IDX] - 1;
-                enter_key <= 1;
-            end else begin
-                key_pressed[ENTER_IDX] <= 0;
-                enter_key <= 0;
-            end
-
-            if (key_hold_counter[SPACE_IDX] > 0) begin
-                key_hold_counter[SPACE_IDX] <= key_hold_counter[SPACE_IDX] - 1;
-                space_key <= 1;
-            end else begin
-                key_pressed[SPACE_IDX] <= 0;
-                space_key <= 0;
             end
         end
     end
