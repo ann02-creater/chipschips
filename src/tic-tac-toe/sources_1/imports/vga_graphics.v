@@ -4,7 +4,7 @@ module vga_graphics(
     input  wire [9:0] x,
     input  wire [9:0] y,
     input  wire       en,
-    input  wire [8:0] sw,
+    input  wire [17:0] sw,  // Changed from 9-bit to 18-bit (2 bits per cell)
     input  wire [8:0] cell_select_flag,
     output reg  [3:0] red,
     output reg  [3:0] green,
@@ -17,6 +17,10 @@ localparam HIGH = 160;
 localparam LINE_W = 3;
 localparam HIGHLIGHT_W = 6;
 
+// Image address offsets
+localparam CIRCLE_OFFSET = 17'h00000;  // Circle image starts at 0
+localparam X_OFFSET = 17'h08500;       // X image starts at 0x8500
+
 // Cell position calculation
 wire [9:0] cell_x_pos = (x < WIDE) ? 10'd0 : (x < 2*WIDE) ? 10'd1 : 10'd2;
 wire [9:0] cell_y_pos = (y < HIGH) ? 10'd0 : (y < 2*HIGH) ? 10'd1 : 10'd2;
@@ -26,20 +30,29 @@ wire [3:0] cell_index = {2'b00, cell_y_pos[1:0]} * 3 + {2'b00, cell_x_pos[1:0]};
 wire [9:0] rel_x = x - (cell_x_pos * WIDE);
 wire [9:0] rel_y = y - (cell_y_pos * HIGH);
 
+// Get cell state (2 bits per cell)
+wire [1:0] cell_state = (cell_index < 9) ? sw[cell_index*2 +: 2] : 2'b00;
+wire is_player1 = (cell_state == 2'b01);
+wire is_player2 = (cell_state == 2'b10);
+wire is_occupied = is_player1 || is_player2;
+
 // Memory address calculation
-wire [15:0] bram_addr = rel_y * WIDE + rel_x;
+wire [15:0] base_addr = rel_y * WIDE + rel_x;
+wire [16:0] bram_addr = is_player1 ? (CIRCLE_OFFSET + base_addr) : 
+                        is_player2 ? (X_OFFSET + base_addr) : 
+                        17'h00000;
+
 wire [11:0] bram_data;
 
-// Block RAM for circle image
-blk_mem_gen_0 u_circle_rom (
+// Block RAM for dual image (circle and X)
+blk_mem_gen_0 u_dual_image_rom (
     .clka(clk),
     .addra(bram_addr),
     .douta(bram_data)
 );
 
 // Pixel detection
-wire is_circle_pixel = |bram_data;
-wire is_active_cell = (cell_index < 9) ? sw[cell_index] : 1'b0;
+wire is_image_pixel = |bram_data && is_occupied;
 wire is_selected_cell = (cell_index < 9) ? cell_select_flag[cell_index] : 1'b0;
 
 // Border detection
@@ -62,11 +75,18 @@ always @(posedge clk or posedge reset) begin
             red   <= 4'h0;
             green <= 4'h0;
             blue  <= 4'h0;
-        end else if (is_active_cell && is_circle_pixel) begin
-            // Green circle
-            red   <= 4'h0;
-            green <= 4'hF;
-            blue  <= 4'h0;
+        end else if (is_image_pixel) begin
+            if (is_player1) begin
+                // Green circle for player 1
+                red   <= 4'h0;
+                green <= 4'hF;
+                blue  <= 4'h0;
+            end else begin
+                // Red X for player 2
+                red   <= 4'hF;
+                green <= 4'h0;
+                blue  <= 4'h0;
+            end
         end else if (is_highlight) begin
             // Red highlight border
             red   <= 4'hF;

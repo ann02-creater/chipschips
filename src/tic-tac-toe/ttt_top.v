@@ -18,7 +18,8 @@ module ttt_top (
     wire win_flag;
     wire [3:0] current_cell;
     wire [8:0] cell_select_flag;
-    wire [8:0] board_state;
+    wire [17:0] board_state;  // Changed from 9-bit to 18-bit
+    wire current_player;      // New signal for current player
     wire clk25;
 
     // Clock generation for game logic (25MHz)
@@ -42,7 +43,8 @@ module ttt_top (
         .win_flag(win_flag),
         .current_cell(current_cell),
         .cell_select_flag(cell_select_flag),
-        .board_out(board_state)
+        .board_out(board_state),
+        .current_player(current_player)  // New connection
     );
 
     // UART Controller with integrated key decoder
@@ -67,7 +69,7 @@ module ttt_top (
     vga_top u_vga (
         .clk25(clk25),
         .reset(reset),
-        .sw(board_state),
+        .sw(board_state),  // Now 18-bit
         .cell_select_flag(cell_select_flag),
         .VGA_HS(VGA_HS),
         .VGA_VS(VGA_VS),
