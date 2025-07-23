@@ -14,6 +14,11 @@ module uart_controller (
     input  wire [8:0] cell_select_flag
 );
 
+    // ASCII character codes
+    localparam KEY_W = 8'h57;      // 'W' for win
+    localparam KEY_C = 8'h43;      // 'C' for cursor
+    localparam KEY_0 = 8'h30;      // '0' - base for digit conversion
+
     wire [7:0] rx_data;
     wire rx_valid;
     wire tx_busy;
@@ -70,10 +75,10 @@ module uart_controller (
 
             if ((current_cell != prev_current_cell || cell_select_flag != prev_cell_select_flag || win_flag != prev_win_flag) && !tx_busy) begin
                 if (win_flag) begin
-                    tx_data <= 8'h57;  // 'W' for win
+                    tx_data <= KEY_W;  // 'W' for win
                     tx_send <= 1;
                 end else begin
-                    tx_data <= current_cell + 8'h30;  // Send current cell position
+                    tx_data <= current_cell + KEY_0;  // Send current cell position
                     tx_send <= 1;
                 end
                 prev_current_cell <= current_cell;
@@ -81,7 +86,7 @@ module uart_controller (
                 prev_win_flag <= win_flag;
                 status_timer <= 0;
             end else if (status_timer >= STATUS_INTERVAL && !tx_busy) begin
-                tx_data <= 8'h43;  // 'C' for cursor position status
+                tx_data <= KEY_C;  // 'C' for cursor position status
                 tx_send <= 1;
                 status_timer <= 0;
             end else begin

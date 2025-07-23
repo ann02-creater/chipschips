@@ -21,6 +21,10 @@ localparam HIGHLIGHT_W = 6;
 localparam CIRCLE_OFFSET = 17'h00000;  // Circle image starts at 0
 localparam X_OFFSET = 17'h08500;       // X image starts at 0x8500
 
+// Color definitions
+localparam COLOR_BLACK = 4'h0;
+localparam COLOR_WHITE = 4'hF;
+
 // Cell position calculation
 wire [9:0] cell_x_pos = (x < WIDE) ? 10'd0 : (x < 2*WIDE) ? 10'd1 : 10'd2;
 wire [9:0] cell_y_pos = (y < HIGH) ? 10'd0 : (y < 2*HIGH) ? 10'd1 : 10'd2;
@@ -66,42 +70,42 @@ wire is_highlight = is_selected_cell &&
 // Color output logic
 always @(posedge clk or posedge reset) begin
     if (reset) begin
-        red   <= 4'h0;
-        green <= 4'h0;
-        blue  <= 4'h0;
+        red   <= COLOR_BLACK;
+        green <= COLOR_BLACK;
+        blue  <= COLOR_BLACK;
     end else begin
         if (!en) begin
             // Off-screen: black
-            red   <= 4'h0;
-            green <= 4'h0;
-            blue  <= 4'h0;
+            red   <= COLOR_BLACK;
+            green <= COLOR_BLACK;
+            blue  <= COLOR_BLACK;
         end else if (is_image_pixel) begin
             if (is_player1) begin
                 // Green circle for player 1
-                red   <= 4'h0;
-                green <= 4'hF;
-                blue  <= 4'h0;
+                red   <= COLOR_BLACK;
+                green <= COLOR_WHITE;
+                blue  <= COLOR_BLACK;
             end else begin
                 // Red X for player 2
-                red   <= 4'hF;
-                green <= 4'h0;
-                blue  <= 4'h0;
+                red   <= COLOR_WHITE;
+                green <= COLOR_BLACK;
+                blue  <= COLOR_BLACK;
             end
         end else if (is_highlight) begin
             // Red highlight border
-            red   <= 4'hF;
-            green <= 4'h0;
-            blue  <= 4'h0;
+            red   <= COLOR_WHITE;
+            green <= COLOR_BLACK;
+            blue  <= COLOR_BLACK;
         end else if (is_border) begin
             // Black border
-            red   <= 4'h0;
-            green <= 4'h0;
-            blue  <= 4'h0;
+            red   <= COLOR_BLACK;
+            green <= COLOR_BLACK;
+            blue  <= COLOR_BLACK;
         end else begin
             // White background
-            red   <= 4'hF;
-            green <= 4'hF;
-            blue  <= 4'hF;
+            red   <= COLOR_WHITE;
+            green <= COLOR_WHITE;
+            blue  <= COLOR_WHITE;
         end
     end
 end
