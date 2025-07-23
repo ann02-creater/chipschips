@@ -20,17 +20,6 @@ module ttt_ctrl (
     localparam S_PLACE = 2'b10;
     localparam S_WIN   = 2'b11;  // New state for game won
     
-    // Cell bit position definitions for board_state
-    localparam CELL_0 = 1;   // board_state[1:0]   - Top left
-    localparam CELL_1 = 3;   // board_state[3:2]   - Top center
-    localparam CELL_2 = 5;   // board_state[5:4]   - Top right
-    localparam CELL_3 = 7;   // board_state[7:6]   - Middle left
-    localparam CELL_4 = 9;   // board_state[9:8]   - Middle center
-    localparam CELL_5 = 11;  // board_state[11:10] - Middle right
-    localparam CELL_6 = 13;  // board_state[13:12] - Bottom left
-    localparam CELL_7 = 15;  // board_state[15:14] - Bottom center
-    localparam CELL_8 = 17;  // board_state[17:16] - Bottom right
-    
     // Player definitions
     localparam PLAYER_1 = 2'b01;  // Player 1 (green circle)
     localparam PLAYER_2 = 2'b10;  // Player 2 (red X)
@@ -38,7 +27,6 @@ module ttt_ctrl (
     
     // Board dimensions
     localparam BOARD_SIZE = 3;    // 3x3 grid
-    localparam TOTAL_CELLS = 9;   // Total number of cells
     
     // Cell movement boundaries
     localparam MIN_UP_CELL = 3;   // Minimum cell index to move up
@@ -124,87 +112,44 @@ module ttt_ctrl (
     wire [3:0] next_cell_left  = (current_cell % BOARD_SIZE != 0) ? current_cell - 1 : current_cell;
     wire [3:0] next_cell_right = (current_cell % BOARD_SIZE != 2) ? current_cell + 1 : current_cell;
 
-    // Check if cell is empty (2 bits per cell) - with explicit return type
-    function reg is_cell_empty;
-        input [17:0] board;
-        input [3:0] cell;
-        reg [1:0] cell_value;
-        begin
-            // Use case statement to avoid dynamic shift
-            case (cell)
-                4'd0: cell_value = board[CELL_0:CELL_0-1];
-                4'd1: cell_value = board[CELL_1:CELL_1-1];
-                4'd2: cell_value = board[CELL_2:CELL_2-1];
-                4'd3: cell_value = board[CELL_3:CELL_3-1];
-                4'd4: cell_value = board[CELL_4:CELL_4-1];
-                4'd5: cell_value = board[CELL_5:CELL_5-1];
-                4'd6: cell_value = board[CELL_6:CELL_6-1];
-                4'd7: cell_value = board[CELL_7:CELL_7-1];
-                4'd8: cell_value = board[CELL_8:CELL_8-1];
-                default: cell_value = 2'b00;
-            endcase
-            is_cell_empty = (cell_value == EMPTY);
-        end
-    endfunction
+    // Check if current cell is empty
+    reg current_cell_empty;
+    always @(*) begin
+        case (current_cell)
+            4'd0: current_cell_empty = (board_state[1:0] == EMPTY);
+            4'd1: current_cell_empty = (board_state[3:2] == EMPTY);
+            4'd2: current_cell_empty = (board_state[5:4] == EMPTY);
+            4'd3: current_cell_empty = (board_state[7:6] == EMPTY);
+            4'd4: current_cell_empty = (board_state[9:8] == EMPTY);
+            4'd5: current_cell_empty = (board_state[11:10] == EMPTY);
+            4'd6: current_cell_empty = (board_state[13:12] == EMPTY);
+            4'd7: current_cell_empty = (board_state[15:14] == EMPTY);
+            4'd8: current_cell_empty = (board_state[17:16] == EMPTY);
+            default: current_cell_empty = 1'b0;
+        endcase
+    end
 
-    // Get cell value (2 bits per cell) - with explicit return type
-    function [1:0] get_cell_value;
-        input [17:0] board;
-        input [3:0] cell;
-        begin
-            // Use case statement to avoid dynamic shift
-            case (cell)
-                4'd0: get_cell_value = board[CELL_0:CELL_0-1];
-                4'd1: get_cell_value = board[CELL_1:CELL_1-1];
-                4'd2: get_cell_value = board[CELL_2:CELL_2-1];
-                4'd3: get_cell_value = board[CELL_3:CELL_3-1];
-                4'd4: get_cell_value = board[CELL_4:CELL_4-1];
-                4'd5: get_cell_value = board[CELL_5:CELL_5-1];
-                4'd6: get_cell_value = board[CELL_6:CELL_6-1];
-                4'd7: get_cell_value = board[CELL_7:CELL_7-1];
-                4'd8: get_cell_value = board[CELL_8:CELL_8-1];
-                default: get_cell_value = 2'b00;
-            endcase
-        end
-    endfunction
-
-    // Check win condition - with explicit return type
-    function reg check_win;
-        input [17:0] board;
-        input player;  // 0 = player1, 1 = player2
-        reg [1:0] player_val;
-        begin
-            player_val = player ? PLAYER_2 : PLAYER_1;
-            
-            // Check rows
-            check_win = ((get_cell_value(board, 0) == player_val) && 
-                        (get_cell_value(board, 1) == player_val) && 
-                        (get_cell_value(board, 2) == player_val)) ||
-                       ((get_cell_value(board, 3) == player_val) && 
-                        (get_cell_value(board, 4) == player_val) && 
-                        (get_cell_value(board, 5) == player_val)) ||
-                       ((get_cell_value(board, 6) == player_val) && 
-                        (get_cell_value(board, 7) == player_val) && 
-                        (get_cell_value(board, 8) == player_val)) ||
-            // Check columns
-                       ((get_cell_value(board, 0) == player_val) && 
-                        (get_cell_value(board, 3) == player_val) && 
-                        (get_cell_value(board, 6) == player_val)) ||
-                       ((get_cell_value(board, 1) == player_val) && 
-                        (get_cell_value(board, 4) == player_val) && 
-                        (get_cell_value(board, 7) == player_val)) ||
-                       ((get_cell_value(board, 2) == player_val) && 
-                        (get_cell_value(board, 5) == player_val) && 
-                        (get_cell_value(board, 8) == player_val)) ||
-            // Check diagonals
-                       ((get_cell_value(board, 0) == player_val) && 
-                        (get_cell_value(board, 4) == player_val) && 
-                        (get_cell_value(board, 8) == player_val)) ||
-                       ((get_cell_value(board, 2) == player_val) && 
-                        (get_cell_value(board, 4) == player_val) && 
-                        (get_cell_value(board, 6) == player_val));
-        end
-    endfunction
+    // Check win condition for current player
+    reg win_detected;
+    reg [1:0] player_val;
+    
+    always @(*) begin
+        player_val = current_player ? PLAYER_2 : PLAYER_1;
+        
+        // Check all win conditions
+        win_detected = 
+            // Rows
+            ((board_state[1:0] == player_val) && (board_state[3:2] == player_val) && (board_state[5:4] == player_val)) ||
+            ((board_state[7:6] == player_val) && (board_state[9:8] == player_val) && (board_state[11:10] == player_val)) ||
+            ((board_state[13:12] == player_val) && (board_state[15:14] == player_val) && (board_state[17:16] == player_val)) ||
+            // Columns
+            ((board_state[1:0] == player_val) && (board_state[7:6] == player_val) && (board_state[13:12] == player_val)) ||
+            ((board_state[3:2] == player_val) && (board_state[9:8] == player_val) && (board_state[15:14] == player_val)) ||
+            ((board_state[5:4] == player_val) && (board_state[11:10] == player_val) && (board_state[17:16] == player_val)) ||
+            // Diagonals
+            ((board_state[1:0] == player_val) && (board_state[9:8] == player_val) && (board_state[17:16] == player_val)) ||
+            ((board_state[5:4] == player_val) && (board_state[9:8] == player_val) && (board_state[13:12] == player_val));
+    end
 
     // Main state machine
     always @(posedge clk or posedge reset) begin
@@ -234,7 +179,7 @@ module ttt_ctrl (
                     end
                     
                     // Check for space press on empty cell
-                    if (space_edge && is_cell_empty(board_state, current_cell)) begin
+                    if (space_edge && current_cell_empty) begin
                         state <= S_WAIT;
                     end
                 end
@@ -255,69 +200,62 @@ module ttt_ctrl (
                     case (current_cell)
                         4'd0: begin
                             if (current_player == 1'b0)
-                                board_state[CELL_0:CELL_0-1] <= PLAYER_1;
+                                board_state[1:0] <= PLAYER_1;
                             else
-                                board_state[CELL_0:CELL_0-1] <= PLAYER_2;
+                                board_state[1:0] <= PLAYER_2;
                         end
                         4'd1: begin
                             if (current_player == 1'b0)
-                                board_state[CELL_1:CELL_1-1] <= PLAYER_1;
+                                board_state[3:2] <= PLAYER_1;
                             else
-                                board_state[CELL_1:CELL_1-1] <= PLAYER_2;
+                                board_state[3:2] <= PLAYER_2;
                         end
                         4'd2: begin
                             if (current_player == 1'b0)
-                                board_state[CELL_2:CELL_2-1] <= PLAYER_1;
+                                board_state[5:4] <= PLAYER_1;
                             else
-                                board_state[CELL_2:CELL_2-1] <= PLAYER_2;
+                                board_state[5:4] <= PLAYER_2;
                         end
                         4'd3: begin
                             if (current_player == 1'b0)
-                                board_state[CELL_3:CELL_3-1] <= PLAYER_1;
+                                board_state[7:6] <= PLAYER_1;
                             else
-                                board_state[CELL_3:CELL_3-1] <= PLAYER_2;
+                                board_state[7:6] <= PLAYER_2;
                         end
                         4'd4: begin
                             if (current_player == 1'b0)
-                                board_state[CELL_4:CELL_4-1] <= PLAYER_1;
+                                board_state[9:8] <= PLAYER_1;
                             else
-                                board_state[CELL_4:CELL_4-1] <= PLAYER_2;
+                                board_state[9:8] <= PLAYER_2;
                         end
                         4'd5: begin
                             if (current_player == 1'b0)
-                                board_state[CELL_5:CELL_5-1] <= PLAYER_1;
+                                board_state[11:10] <= PLAYER_1;
                             else
-                                board_state[CELL_5:CELL_5-1] <= PLAYER_2;
+                                board_state[11:10] <= PLAYER_2;
                         end
                         4'd6: begin
                             if (current_player == 1'b0)
-                                board_state[CELL_6:CELL_6-1] <= PLAYER_1;
+                                board_state[13:12] <= PLAYER_1;
                             else
-                                board_state[CELL_6:CELL_6-1] <= PLAYER_2;
+                                board_state[13:12] <= PLAYER_2;
                         end
                         4'd7: begin
                             if (current_player == 1'b0)
-                                board_state[CELL_7:CELL_7-1] <= PLAYER_1;
+                                board_state[15:14] <= PLAYER_1;
                             else
-                                board_state[CELL_7:CELL_7-1] <= PLAYER_2;
+                                board_state[15:14] <= PLAYER_2;
                         end
                         4'd8: begin
                             if (current_player == 1'b0)
-                                board_state[CELL_8:CELL_8-1] <= PLAYER_1;
+                                board_state[17:16] <= PLAYER_1;
                             else
-                                board_state[CELL_8:CELL_8-1] <= PLAYER_2;
+                                board_state[17:16] <= PLAYER_2;
                         end
                     endcase
                     
-                    // Check for win
-                    if (check_win(board_state, current_player)) begin
-                        win_flag <= 1'b1;
-                        state <= S_WIN;
-                    end else begin
-                        // Switch player and continue
-                        current_player <= ~current_player;
-                        state <= S_MOVE;
-                    end
+                    // Move to move state first to allow win check to see updated board
+                    state <= S_MOVE;
                 end
                 
                 S_WIN: begin
@@ -327,6 +265,12 @@ module ttt_ctrl (
                 
                 default: state <= S_MOVE;
             endcase
+            
+            // Check for win after placing piece (separate from state machine)
+            if (state == S_MOVE && win_detected) begin
+                win_flag <= 1'b1;
+                state <= S_WIN;
+            end
         end
     end
 
