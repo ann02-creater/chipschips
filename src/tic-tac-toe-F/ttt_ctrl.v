@@ -146,18 +146,23 @@ module ttt_ctrl (
                         4'd7: board_state[15:14] <= current_player ? PLAYER_2 : PLAYER_1;
                         4'd8: board_state[17:16] <= current_player ? PLAYER_2 : PLAYER_1;
                     endcase
-                    current_player <= ~current_player; // <== 플레이어 교체 추가!
-                    state <= S_MOVE;
+                    if (win_detected) begin
+                        win_flag <= 1'b1;
+                        state <= S_WIN;
+                    end else begin
+                        // Switch player and return to move state
+                        current_player <= ~current_player;
+                        state <= S_MOVE;
+                    end
                 end
+                
                 S_WIN: begin
-                    // 아무 동작 없음. 승리 시 멈춤.
+                    // Game is won, stay in this state until reset
+                    // No input is processed
                 end
+                
                 default: state <= S_MOVE;
             endcase
-            if (state == S_MOVE && win_detected) begin
-                win_flag <= 1;
-                state <= S_WIN;
-            end
         end
     end
 

@@ -254,8 +254,15 @@ module ttt_ctrl (
                         end
                     endcase
                     
-                    // Move to move state first to allow win check to see updated board
-                    state <= S_MOVE;
+                    // Check for win before switching player
+                    if (win_detected) begin
+                        win_flag <= 1'b1;
+                        state <= S_WIN;
+                    end else begin
+                        // Switch player and return to move state
+                        current_player <= ~current_player;
+                        state <= S_MOVE;
+                    end
                 end
                 
                 S_WIN: begin
@@ -265,12 +272,6 @@ module ttt_ctrl (
                 
                 default: state <= S_MOVE;
             endcase
-            
-            // Check for win after placing piece (separate from state machine)
-            if (state == S_MOVE && win_detected) begin
-                win_flag <= 1'b1;
-                state <= S_WIN;
-            end
         end
     end
 

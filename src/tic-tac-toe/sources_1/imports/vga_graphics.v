@@ -19,7 +19,7 @@ localparam HIGHLIGHT_W = 6;
 
 // Image address offsets
 localparam CIRCLE_OFFSET = 17'h00000;  // Circle image starts at 0
-localparam X_OFFSET = 17'h08500;       // X image starts at 0x8500
+localparam X_OFFSET = 17'h08520;       // X image starts at 34080 (213*160)
 
 // Color definitions
 localparam COLOR_BLACK = 4'h0;
