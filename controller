@@ -18,7 +18,7 @@ module uart_controller (
         .reset(reset),
         .rx_in(rx_in),
         .data_out(rx_data),
-        .rx_valid(rx_valid)
+        .data_valid(rx_valid)
     );
 
     key_decoder u_decoder (
