@@ -14,10 +14,6 @@ module uart_controller (
     input  wire [8:0] cell_select_flag
 );
 
-    // ASCII character codes
-    localparam KEY_W = 8'h57;      // 'W' for win
-    localparam KEY_C = 8'h43;      // 'C' for cursor
-    localparam KEY_0 = 8'h30;      // '0' - base for digit conversion
 
     wire [7:0] rx_data;
     wire rx_valid;
