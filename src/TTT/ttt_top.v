@@ -14,7 +14,7 @@ module ttt_top (
     // Internal reset signal (active-high)
     wire reset = ~reset_n;
 
-    // Internal signals  
+    // Internal signals
     wire up, down, left, right, enter, space;
     wire [1:0] win_flag;
     wire [3:0] current_cell;
@@ -23,52 +23,7 @@ module ttt_top (
     wire current_player;      // New signal for current player
     wire clk25;
 
-    // UART Echo Test를 위한 신호
-    wire [7:0] rx_data;
-    wire rx_data_valid;
-    wire tx_busy;
-
-    // Direct UART RX instance for echo test
-    uart_rx u_echo_rx (
-        .clk(clk_in),
-        .reset(reset),
-        .rx_in(rx_in),
-        .data_out(rx_data),
-        .data_valid(rx_data_valid)
-    );
-
-    // UART TX for echo back
-    uart_tx u_echo_tx (
-        .clk(clk_in),
-        .reset(reset),
-        .data_in(rx_data),
-        .data_valid(rx_data_valid),
-        .tx_out(tx_out),
-        .tx_busy(tx_busy)
-    );
-
-    // LED indicators
-    reg rx_led;
-    reg [23:0] led_counter;
-
-    always @(posedge clk_in or posedge reset) begin
-        if (reset) begin
-            rx_led <= 1'b0;
-            led_counter <= 24'd0;
-        end else begin
-            if (rx_data_valid) begin
-                rx_led <= 1'b1;
-                led_counter <= 24'd10000000; // 100ms
-            end else if (led_counter > 0) begin
-                led_counter <= led_counter - 1;
-            end else begin
-                rx_led <= 1'b0;
-            end
-        end
-    end
-
-    assign FLAG[0] = rx_led;  // RX 데이터 수신 표시
-    assign FLAG[1] = up | down | left | right | enter | space;  // 키 입력 표시 
+    assign FLAG = win_flag;
 
     // Clock generation for game logic (25MHz)
     clk_wiz_0 u_clk25 (
@@ -100,12 +55,16 @@ module ttt_top (
         .clk(clk_in),  // Use 100MHz clock for UART
         .reset(reset),
         .rx_in(rx_in),
+        .tx_out(tx_out),
         .up(up),
         .down(down),
         .left(left),
         .right(right),
         .enter(enter),
-        .space(space)
+        .space(space),
+        .win_flag(win_flag),
+        .current_cell(current_cell),
+        .cell_select_flag(cell_select_flag)
     );
 
 

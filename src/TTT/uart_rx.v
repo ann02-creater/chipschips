@@ -1,3 +1,23 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// UART RX module - Reference-based implementation
+// Adapted for Nexys A7 tic-tac-toe project
+//
+////////////////////////////////////////////////////////////////////////////////
+
+`default_nettype none
+
+`define    RXUL_BIT_ZERO        4'h0
+`define    RXUL_BIT_ONE        4'h1
+`define    RXUL_BIT_TWO        4'h2
+`define    RXUL_BIT_THREE        4'h3
+`define    RXUL_BIT_FOUR        4'h4
+`define    RXUL_BIT_FIVE        4'h5
+`define    RXUL_BIT_SIX        4'h6
+`define    RXUL_BIT_SEVEN        4'h7
+`define    RXUL_STOP        4'h8
+`define    RXUL_IDLE        4'hf
+
 module uart_rx(
     input  wire       clk,
     input  wire       reset,
@@ -6,97 +26,101 @@ module uart_rx(
     output reg        data_valid
 );
 
-parameter [13:0] CLOCKS_PER_BAUD = 14'd868; // 100MHz / 115200 (표준 설정)
+parameter [23:0] CLOCKS_PER_BAUD = 24'd10417; // 100MHz / 9600
 
-localparam [3:0]
-    IDLE  = 4'hF,
-    BIT0  = 4'h0,
-    BIT1  = 4'h1,
-    BIT2  = 4'h2,
-    BIT3  = 4'h3,
-    BIT4  = 4'h4,
-    BIT5  = 4'h5,
-    BIT6  = 4'h6,
-    BIT7  = 4'h7,
-    STOP  = 4'h8;
+wire    [23:0]    half_baud;
+reg    [3:0]    state;
 
-reg	[3:0]	state;
-reg	[13:0]	baud_counter;
-reg	zero_baud_counter;
-reg q_uart, ck_uart; 
+assign    half_baud = { 1'b0, CLOCKS_PER_BAUD[23:1] } - 24'h1;
+reg    [23:0]    baud_counter;
+reg        zero_baud_counter;
 
-wire [13:0] half_baud = {1'b0, CLOCKS_PER_BAUD[13:1]}; /* [13:0] CLOCKS_PER_BAUD 에서 right shift == /2, MSB = 0 , 5208clocks */
-
+// Register input to avoid metastability
+reg    q_uart, qq_uart, ck_uart;
+initial    q_uart  = 1'b0;
+initial    qq_uart = 1'b0;
+initial    ck_uart = 1'b0;
 always @(posedge clk)
 begin
-    q_uart <= rx_in; 
-    ck_uart <= q_uart; //메타스테빌리티 위험 방지 동기화과정
+    q_uart <= rx_in;
+    qq_uart <= q_uart;
+    ck_uart <= qq_uart;
 end
 
-reg [13:0] chg_counter;
-reg half_baud_time;
-
+// Track clocks since last change
+reg    [23:0]    chg_counter;
+initial    chg_counter = 24'h00;
 always @(posedge clk)
-    if (q_uart != ck_uart)
-        chg_counter <= 14'h0; //카운팅(측정)시작!
-    else if (chg_counter < half_baud) //ck_uart =0 이 된 시점부터 카운팅 됨
+    if (qq_uart != ck_uart)
+        chg_counter <= 24'h00;
+    else
         chg_counter <= chg_counter + 1;
 
+// Check if we are in middle of start bit
+reg    half_baud_time;
+initial    half_baud_time = 0;
 always @(posedge clk)
-    half_baud_time <= (~ck_uart) && (chg_counter >= half_baud); //매클럭마다 신호가 low & half_baud 인지 체크
+    half_baud_time <= (~ck_uart)&&(chg_counter >= half_baud);
 
-// Baud counter
+initial    state = `RXUL_IDLE;
+initial    data_valid = 1'b0;
+initial    data_out = 8'h00;
+initial    baud_counter = 24'h00;
+initial    zero_baud_counter = 1'b0;
+
+// Baud counter (only runs when not in IDLE state)
 always @(posedge clk)
     if (reset) begin
-        baud_counter <= 14'h0;
+        baud_counter <= 24'h00;
         zero_baud_counter <= 1'b0;
-    end 
-    else if (state != IDLE) begin
+    end else if (state != `RXUL_IDLE) begin
         if (zero_baud_counter)
-            baud_counter <= CLOCKS_PER_BAUD - 14'h1; //다음 비트 카운팅 시작
+            baud_counter <= CLOCKS_PER_BAUD - 24'h01;
         else
-            baud_counter <= baud_counter - 14'h1; //카운팅 중
-            zero_baud_counter <= (baud_counter == 14'h1); //0이 되면 다음 비트로 넘어가기 위해 신호 발생
-    end 
-    else begin // IDLE 상태
-        baud_counter <= CLOCKS_PER_BAUD - 14'h1;
+            baud_counter <= baud_counter - 24'h01;
+
+        zero_baud_counter <= (baud_counter == 24'h01);
+    end else begin
+        // IDLE 상태에서는 보드레이트 카운터 정지
+        baud_counter <= CLOCKS_PER_BAUD - 24'h01;
         zero_baud_counter <= 1'b0;
     end
 
-
-always @(posedge clk) // 상태머신
-    if (reset)
-        state <= IDLE; 
-    else if (state == IDLE) begin
-        if ((~ck_uart) && half_baud_time)
-            state <= BIT0;
-    end 
-    else if (zero_baud_counter) begin
-        if (state < STOP)
-            state <= state + 1;
-    else
-            state <= IDLE;
+// Main state machine
+always @(posedge clk)
+begin
+    if (reset) begin
+        state <= `RXUL_IDLE;
+    end else begin
+        if (state == `RXUL_IDLE)
+        begin
+            state <= `RXUL_IDLE;
+            if ((~ck_uart)&&(half_baud_time))
+                state <= `RXUL_BIT_ZERO;
+        end else if (zero_baud_counter)
+        begin
+            if (state < `RXUL_STOP)
+                state <= state + 1;
+            else
+                state <= `RXUL_IDLE;
+        end
     end
+end
 
-
-reg [7:0] data_reg;
-
+// Data bit capture logic
+reg    [7:0]    data_reg;
 always @(posedge clk)
     if (zero_baud_counter)
-        data_reg <= {ck_uart, data_reg[7:1]}; //수신된 데이터 비트들을 시프트 레지스터에 저장(BIT0부터 BIT7까지)
+        data_reg <= { ck_uart, data_reg[7:1] };
 
-
+// Output data logic
 always @(posedge clk)
     if (reset) begin
         data_valid <= 1'b0;
-        data_out <= 8'h0;
-
-    end else if (zero_baud_counter && (state == STOP)) begin
+        data_out <= 8'h00;
+    end else if ((zero_baud_counter)&&(state == `RXUL_STOP)) begin
         data_valid <= 1'b1;
-        data_out <= data_reg; // 완성된 8bit 데이터 출력
-
-
-
+        data_out <= data_reg;
     end else begin
         data_valid <= 1'b0;
     end
