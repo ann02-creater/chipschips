@@ -24,8 +24,8 @@ module uart_controller (
     key_decoder u_decoder (
         .clk(clk),
         .reset(reset),
-        .data(rx_data),
-        .rx_valid(rx_valid),
+        .uart_data(rx_data),
+        .uart_valid(rx_valid),
         .up(up),
         .down(down),
         .left(left),
