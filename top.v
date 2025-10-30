@@ -50,7 +50,7 @@ module synchronizer (
 );
     reg ff1;
     always @(posedge clk) begin
-        if (reset) begin
+        if (!reset) begin
             ff1 <= 1'b0;
             sync_x <= 1'b0;
         end else begin

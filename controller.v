@@ -14,8 +14,8 @@ localparam  S0 = 3'd0,
 
 reg [2:0] current_state, next_state;
 
-always @(posedge clk or posedge reset) begin
-    if (reset) begin
+always @(posedge clk or negedge reset) begin
+    if (!reset) begin
         current_state <= S0;
     end else begin
         current_state <= next_state;
