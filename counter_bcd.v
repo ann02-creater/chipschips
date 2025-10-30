@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module counter_bcd(
     input wire clk,
     input wire reset,
@@ -6,17 +8,17 @@ module counter_bcd(
     output wire TC
 );
 
-    assign TC = (Q == 4'd9) && en;
-    
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
+    always @(posedge clk or negedge reset) begin
+        if (!reset)
             Q <= 4'd0;
-        end else if (en) begin
+        else if (en) begin
             if (Q == 4'd9)
                 Q <= 4'd0;
             else
                 Q <= Q + 1;
         end
     end
+
+    assign TC = (Q == 4'd9) && en;
 
 endmodule

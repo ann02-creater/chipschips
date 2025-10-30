@@ -7,7 +7,6 @@ module clock_divider(
     output wire tc_1sec
 );
 
-
     wire [7:0] TC;
 
     counter_bcd u0 (.clk(clk), .reset(reset), .en(en),     .Q(), .TC(TC[0]));
