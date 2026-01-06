@@ -1,108 +1,92 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// UART TX module - Reference-based implementation
-// Adapted for Nexys A7 tic-tac-toe project
-//
-////////////////////////////////////////////////////////////////////////////////
-
-`default_nettype none
-
-`define    TXUL_BIT_ZERO    4'h0
-`define    TXUL_BIT_ONE    4'h1
-`define    TXUL_BIT_TWO    4'h2
-`define    TXUL_BIT_THREE    4'h3
-`define    TXUL_BIT_FOUR    4'h4
-`define    TXUL_BIT_FIVE    4'h5
-`define    TXUL_BIT_SIX    4'h6
-`define    TXUL_BIT_SEVEN    4'h7
-`define    TXUL_STOP    4'h8
-`define    TXUL_IDLE    4'hf
-
-module uart_tx(
+// Simple UART Transmitter for echo test
+module uart_tx (
     input  wire       clk,
     input  wire       reset,
     input  wire [7:0] data_in,
-    input  wire       send,
+    input  wire       data_valid,
     output reg        tx_out,
-    output wire       busy
+    output reg        tx_busy
 );
 
-parameter [23:0] CLOCKS_PER_BAUD = 24'd10417;
+    // Same baud rate as uart_rx
+    parameter [13:0] CLOCKS_PER_BIT = 14'd868; // 100MHz / 115200
 
-reg    [23:0]    baud_counter;
-reg    [3:0]    state;
-reg    [7:0]    lcl_data;
-reg        r_busy, zero_baud_counter;
+    // State machine
+    localparam IDLE  = 2'b00;
+    localparam START = 2'b01;
+    localparam DATA  = 2'b10;
+    localparam STOP  = 2'b11;
 
-initial    r_busy = 1'b1;
-initial    state  = `TXUL_IDLE;
-initial tx_out = 1'b1;
+    reg [1:0]  state = IDLE;
+    reg [13:0] baud_counter = 0;
+    reg [2:0]  bit_index = 0;
+    reg [7:0]  data_buffer = 0;
 
-always @(posedge clk)
-begin
-    if (reset) begin
-        r_busy <= 1'b1;
-        state <= `TXUL_IDLE;
-        tx_out <= 1'b1;
-    end else begin
-        if (!zero_baud_counter)
-            r_busy <= 1'b1;
-        else if (state == `TXUL_IDLE)
-        begin
-            r_busy <= 1'b0;
-            tx_out <= 1'b1;  // IDLE 상태에서 high
-            if ((send)&&(!r_busy))
-            begin
-                r_busy <= 1'b1;
-                state <= `TXUL_BIT_ZERO;
-            end
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            tx_out <= 1'b1;  // Idle high
+            tx_busy <= 1'b0;
+            state <= IDLE;
+            baud_counter <= 0;
+            bit_index <= 0;
         end else begin
-            r_busy <= 1'b1;
-            if (state <= `TXUL_STOP)
-                state <= state + 1;
-            else
-                state <= `TXUL_IDLE;
+            case (state)
+                IDLE: begin
+                    tx_out <= 1'b1;  // Keep high when idle
+                    tx_busy <= 1'b0;
+                    baud_counter <= 0;
+                    bit_index <= 0;
 
-            // UART 데이터 출력 로직을 여기로 이동
-            if (zero_baud_counter)
-            begin
-                if (state == `TXUL_BIT_ZERO)
+                    if (data_valid) begin
+                        data_buffer <= data_in;
+                        tx_busy <= 1'b1;
+                        state <= START;
+                    end
+                end
+
+                START: begin
                     tx_out <= 1'b0;  // Start bit
-                else if (state == `TXUL_STOP)
+
+                    if (baud_counter < CLOCKS_PER_BIT - 1) begin
+                        baud_counter <= baud_counter + 1;
+                    end else begin
+                        baud_counter <= 0;
+                        state <= DATA;
+                    end
+                end
+
+                DATA: begin
+                    tx_out <= data_buffer[bit_index];
+
+                    if (baud_counter < CLOCKS_PER_BIT - 1) begin
+                        baud_counter <= baud_counter + 1;
+                    end else begin
+                        baud_counter <= 0;
+
+                        if (bit_index < 7) begin
+                            bit_index <= bit_index + 1;
+                        end else begin
+                            bit_index <= 0;
+                            state <= STOP;
+                        end
+                    end
+                end
+
+                STOP: begin
                     tx_out <= 1'b1;  // Stop bit
-                else
-                    tx_out <= lcl_data[0];  // Data bits
-            end
+
+                    if (baud_counter < CLOCKS_PER_BIT - 1) begin
+                        baud_counter <= baud_counter + 1;
+                    end else begin
+                        baud_counter <= 0;
+                        tx_busy <= 1'b0;
+                        state <= IDLE;
+                    end
+                end
+
+                default: state <= IDLE;
+            endcase
         end
     end
-end
-
-assign    busy = r_busy;
-
-// Working copy of data register
-always @(posedge clk)
-    if (reset)
-        lcl_data <= 8'hff;
-    else if ((send)&&(!busy))
-        lcl_data <= data_in;
-    else if (zero_baud_counter)
-        lcl_data <= { 1'b1, lcl_data[7:1] };
-
-// Baud counter
-always @(posedge clk)
-    if (reset)
-        baud_counter <= 24'h00;
-    else if (zero_baud_counter)
-        baud_counter <= CLOCKS_PER_BAUD - 24'h01;
-    else
-        baud_counter <= baud_counter - 24'h01;
-
-always @(posedge clk)
-    if (reset)
-        zero_baud_counter <= 1'b0;
-    else
-        zero_baud_counter <= (baud_counter == 24'h01);
-
-// 중복된 tx_out 할당 블록 제거
 
 endmodule
